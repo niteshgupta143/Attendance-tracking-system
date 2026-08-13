@@ -46,13 +46,13 @@
         </div>
 
         <!-- Guide Button -->
-        <button class="btn btn-secondary btn-sm" id="btnOpenGuide">
+        <button class="btn btn-secondary btn-sm" id="btnOpenGuide" onclick="document.getElementById('guideModal').classList.remove('hidden')">
           <i class="fa-solid fa-circle-question"></i> Connect Options
         </button>
 
         <!-- Wallet Connection Buttons -->
         <div class="wallet-container" id="walletContainer">
-          <button class="btn btn-primary" id="btnConnectWallet">
+          <button class="btn btn-primary" id="btnConnectWallet" onclick="window.triggerConnect && window.triggerConnect()">
             <i class="fa-solid fa-wallet"></i> Connect Wallet
           </button>
           
@@ -64,7 +64,7 @@
             <button class="btn-icon" id="btnCopyAddress" title="Copy Wallet Address">
               <i class="fa-regular fa-copy"></i>
             </button>
-            <button class="btn btn-outline-danger btn-sm" id="btnDisconnectWallet">
+            <button class="btn btn-outline-danger btn-sm" id="btnDisconnectWallet" onclick="window.triggerDisconnect && window.triggerDisconnect()">
               <i class="fa-solid fa-power-off"></i> Disconnect
             </button>
           </div>
@@ -84,8 +84,8 @@
           </div>
         </div>
         <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-          <button class="btn btn-sm btn-primary" id="btnBannerConnect"><i class="fa-solid fa-wallet"></i> Connect Wallet</button>
-          <button class="btn btn-sm btn-accent" id="btnInstantConnectTop"><i class="fa-solid fa-bolt"></i> 1-Click Instant Connect</button>
+          <button class="btn btn-sm btn-primary" id="btnBannerConnect" onclick="window.triggerConnect && window.triggerConnect()"><i class="fa-solid fa-wallet"></i> Connect Wallet</button>
+          <button class="btn btn-sm btn-accent" id="btnInstantConnectTop" onclick="window.triggerInstantConnect && window.triggerInstantConnect()"><i class="fa-solid fa-bolt"></i> 1-Click Instant Connect</button>
         </div>
       </div>
 
@@ -440,7 +440,7 @@
     <div class="modal-card glass-card">
       <div class="modal-header">
         <h3><i class="fa-solid fa-wallet text-accent"></i> Choose Connection Method</h3>
-        <button class="btn-icon" id="btnCloseGuide"><i class="fa-solid fa-xmark"></i></button>
+        <button class="btn-icon" id="btnCloseGuide" onclick="document.getElementById('guideModal').classList.add('hidden')"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div class="modal-body">
 
@@ -452,7 +452,7 @@
           <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.85rem;">
             Instantly connects a live Stellar Testnet wallet account (`GAIH...`) without needing extension popups or passwords.
           </p>
-          <button class="btn btn-accent btn-lg btn-block" id="btnModalInstantConnect">
+          <button class="btn btn-accent btn-lg btn-block" id="btnModalInstantConnect" onclick="window.triggerInstantConnect && window.triggerInstantConnect()">
             <i class="fa-solid fa-bolt"></i> Connect Testnet Account Now
           </button>
         </div>
@@ -465,7 +465,7 @@
           <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.85rem;">
             Connect using the official Freighter extension installed in Chrome toolbar (🧩 -> Freighter).
           </p>
-          <button class="btn btn-primary btn-block" id="btnConnectFreighterDirect">
+          <button class="btn btn-primary btn-block" id="btnConnectFreighterDirect" onclick="window.triggerFreighterConnect && window.triggerFreighterConnect()">
             <i class="fa-solid fa-plug"></i> Connect Freighter Extension
           </button>
         </div>
@@ -475,7 +475,7 @@
           <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.4rem;">Custom Stellar Testnet Address (Starts with G):</label>
           <div style="display: flex; gap: 0.5rem;">
             <input type="text" id="inputCustomPublicKey" class="form-control code-font" placeholder="e.g. GAIH3ULLFQ4DGSECF2AR..." style="font-size: 0.8rem;">
-            <button class="btn btn-secondary btn-sm" id="btnSubmitCustomKey" style="white-space: nowrap;">Connect Key</button>
+            <button class="btn btn-secondary btn-sm" id="btnSubmitCustomKey" onclick="window.triggerCustomKey && window.triggerCustomKey()" style="white-space: nowrap;">Connect Key</button>
           </div>
         </div>
 
@@ -484,7 +484,7 @@
         <a href="https://www.freighter.app" target="_blank" rel="noreferrer" class="btn btn-xs btn-outline">
           <i class="fa-solid fa-download"></i> Download Freighter Extension
         </a>
-        <button class="btn btn-secondary btn-sm" id="btnCloseGuideBtn">Close</button>
+        <button class="btn btn-secondary btn-sm" id="btnCloseGuideBtn" onclick="document.getElementById('guideModal').classList.add('hidden')">Close</button>
       </div>
     </div>
   </div>
