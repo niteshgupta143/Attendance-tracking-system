@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StellarAttend - Blockchain Attendance Tracking System (Stellar Testnet)</title>
+  
+  <!-- SEO & Meta -->
+  <meta name="description" content="Decentralized Attendance Tracking System built on Stellar Testnet with Freighter Wallet integration. Record and verify attendance on-chain with low fees and high speed.">
+  <meta name="keywords" content="Stellar, Testnet, Freighter Wallet, Blockchain, Attendance System, Crypto, Web3">
+
+  <!-- Google Fonts: Inter & Space Grotesk -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Icons for UI -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Stellar SDK for browser -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/stellar-sdk/10.4.0/stellar-sdk.min.js"></script>
+
+  <!-- App Styles -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app" class="app-container">
+    
+    <!-- Top Navigation Bar -->
+    <header class="navbar">
+      <div class="nav-brand">
+        <div class="logo-icon">
+          <i class="fa-solid fa-user-check"></i>
+        </div>
+        <div class="brand-text">
+          <span class="brand-title">Stellar<span class="gradient-text">Attend</span></span>
+          <span class="brand-subtitle">Blockchain Attendance System</span>
+        </div>
+      </div>
+
+      <div class="nav-actions">
+        <!-- Network Badge -->
+        <div class="network-badge" id="networkBadge">
+          <span class="pulse-dot"></span>
+          <span id="networkName">Stellar Testnet</span>
+        </div>
+
+        <!-- Guide Button -->
+        <button class="btn btn-secondary btn-sm" id="btnOpenGuide">
+          <i class="fa-solid fa-circle-question"></i> Connect Options
+        </button>
+
+        <!-- Wallet Connection Buttons -->
+        <div class="wallet-container" id="walletContainer">
+          <button class="btn btn-primary" id="btnConnectWallet">
+            <i class="fa-solid fa-wallet"></i> Connect Wallet
+          </button>
+          
+          <div class="wallet-connected-pill hidden" id="walletPill">
+            <div class="wallet-info">
+              <i class="fa-solid fa-shield-halved text-success"></i>
+              <span id="walletAddressPill">G...</span>
+            </div>
+            <button class="btn-icon" id="btnCopyAddress" title="Copy Wallet Address">
+              <i class="fa-regular fa-copy"></i>
+            </button>
+            <button class="btn btn-outline-danger btn-sm" id="btnDisconnectWallet">
+              <i class="fa-solid fa-power-off"></i> Disconnect
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Dashboard Body -->
+    <main class="main-content">
+
+      <!-- Alert Notification Banner if Wallet Not Connected -->
+      <div class="alert-banner" id="connectNoticeBanner">
+        <div class="alert-content">
+          <i class="fa-solid fa-circle-info alert-icon"></i>
+          <div>
+            <strong>Wallet Connection:</strong> Connect your wallet to view live XLM balance and record on-chain attendance.
+          </div>
+        </div>
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+          <button class="btn btn-sm btn-primary" id="btnBannerConnect"><i class="fa-solid fa-wallet"></i> Connect Wallet</button>
+          <button class="btn btn-sm btn-accent" id="btnInstantConnectTop"><i class="fa-solid fa-bolt"></i> 1-Click Instant Connect</button>
+        </div>
+      </div>
+
+      <!-- Stats Grid / Balance Dashboard Cards -->
+      <section class="dashboard-grid">
+        
+        <!-- Connected Wallet Card -->
+        <div class="card glass-card">
+          <div class="card-header">
+            <div class="card-title">
+              <i class="fa-solid fa-id-card text-accent"></i> Wallet Identity
+            </div>
+            <span class="badge badge-info" id="walletStatusBadge">Disconnected</span>
+          </div>
+          <div class="card-body">
+            <div class="wallet-address-box">
+              <span class="label">Public Key (Account ID):</span>
+              <div class="address-display" id="displayPublicKey">
+                <span class="text-muted">No wallet connected</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- XLM Balance Card (Level 1 Requirement #3) -->
+        <div class="card glass-card balance-card">
+          <div class="card-header">
+            <div class="card-title">
+              <i class="fa-solid fa-coins text-warning"></i> XLM Balance (Testnet)
+            </div>
+            <button class="btn-icon" id="btnRefreshBalance" title="Refresh Balance">
+              <i class="fa-solid fa-arrows-rotate" id="refreshIcon"></i>
+            </button>
+          </div>
+          <div class="card-body">
+            <div class="balance-display">
+              <span class="balance-amount" id="displayBalance">--</span>
+              <span class="balance-symbol">XLM</span>
+            </div>
+            <div class="balance-footer">
+              <span class="text-subtle" id="balanceStatusText">Connect wallet to view live balance</span>
+              <button class="btn btn-accent btn-xs hidden" id="btnFriendbot">
+                <i class="fa-solid fa-faucet-drip"></i> Fund 10k XLM (Friendbot)
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- On-Chain Stats Card -->
+        <div class="card glass-card">
+          <div class="card-header">
+            <div class="card-title">
+              <i class="fa-solid fa-chart-line text-success"></i> Attendance Metrics
+            </div>
+            <span class="badge badge-success">Live Network</span>
+          </div>
+          <div class="card-body metrics-grid">
+            <div class="metric-item">
+              <span class="metric-value" id="statTotalCheckIns">0</span>
+              <span class="metric-label">Total Check-ins</span>
+            </div>
+            <div class="metric-item">
+              <span class="metric-value" id="statActiveSessions">3</span>
+              <span class="metric-label">Active Classes</span>
+            </div>
+            <div class="metric-item">
+              <span class="metric-value" id="statVerifiedOnChain">0</span>
+              <span class="metric-label">Verified Tx Hash</span>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- Navigation Tabs -->
+      <nav class="tabs-nav">
+        <button class="tab-btn active" data-tab="tabCheckIn">
+          <i class="fa-solid fa-signature"></i> Mark Attendance (Submit Tx)
+        </button>
+        <button class="tab-btn" data-tab="tabHistory">
+          <i class="fa-solid fa-list-check"></i> Attendance Ledger
+        </button>
+        <button class="tab-btn" data-tab="tabSessions">
+          <i class="fa-solid fa-chalkboard-user"></i> Active Classes
+        </button>
+      </nav>
+
+      <!-- TAB 1: ATTENDANCE CHECK-IN (Transaction Flow) -->
+      <section class="tab-content active" id="tabCheckIn">
+        <div class="checkin-container">
+          <div class="card glass-card form-card">
+            <div class="card-header">
+              <div class="card-title">
+                <i class="fa-solid fa-graduation-cap text-primary"></i> On-Chain Student Check-In Form
+              </div>
+              <span class="badge badge-outline">Stellar Testnet Transaction</span>
+            </div>
+            
+            <form id="checkInForm" onsubmit="return false;">
+              
+              <!-- Session Selector -->
+              <div class="form-group">
+                <label for="selectSession"><i class="fa-solid fa-book"></i> Select Class Session</label>
+                <select id="selectSession" class="form-control" required>
+                  <option value="CS401-2026">CS401: Distributed Systems & Blockchain Engineering (09:00 AM)</option>
+                  <option value="W3101-2026">W3101: Stellar Smart Contracts & Soroban Workshop (01:30 PM)</option>
+                  <option value="SEC202-2026">SEC202: Cryptographic Protocols & Security (03:45 PM)</option>
+                </select>
+              </div>
+
+              <div class="form-row">
+                <!-- Student ID -->
+                <div class="form-group">
+                  <label for="inputStudentId"><i class="fa-solid fa-id-badge"></i> Student ID / Roll No</label>
+                  <input type="text" id="inputStudentId" class="form-control" placeholder="e.g. STU-88492" value="STU-2026-9812" required>
+                </div>
+
+                <!-- Student Name -->
+                <div class="form-group">
+                  <label for="inputStudentName"><i class="fa-solid fa-user"></i> Full Name</label>
+                  <input type="text" id="inputStudentName" class="form-control" placeholder="e.g. Alex Morgan" value="Alex Rivera" required>
+                </div>
+              </div>
+
+              <!-- Receiver Account (Instructor Wallet / Classroom Address) -->
+              <div class="form-group">
+                <label for="inputReceiverAddress">
+                  <i class="fa-solid fa-building-columns"></i> Classroom Receiver Account (Testnet Address)
+                  <span class="tooltip-icon" title="The account that receives the micro-attendance transaction on Stellar Testnet"><i class="fa-solid fa-circle-info"></i></span>
+                </label>
+                <input type="text" id="inputReceiverAddress" class="form-control code-font" value="GAIH3ULLFQ4DGSECF2AR555KZ4KNDGEKN4AFI4SU2M7B45TX2636D6QM" required>
+                <small class="form-text">Pre-filled with default Stellar Testnet classroom address. You can also send to your own wallet.</small>
+              </div>
+
+              <!-- Transaction Amount / Memo -->
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="inputAmount"><i class="fa-solid fa-microchip"></i> Check-in Fee (XLM)</label>
+                  <input type="number" id="inputAmount" class="form-control" value="0.00001" step="0.00001" min="0.00001" required>
+                  <small class="form-text">Micro XLM amount to create testnet transaction</small>
+                </div>
+
+                <div class="form-group">
+                  <label for="inputMemo"><i class="fa-solid fa-note-sticky"></i> Stellar Transaction Memo</label>
+                  <input type="text" id="inputMemo" class="form-control" value="ATTEND:CS401:STU9812" maxlength="28" required>
+                  <small class="form-text">Max 28 chars text memo stored immutably on Stellar ledger</small>
+                </div>
+              </div>
+
+              <!-- Submit Action Button -->
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary btn-lg btn-block" id="btnSubmitAttendance">
+                  <i class="fa-solid fa-paper-plane"></i> Record Attendance on Blockchain (Send Tx)
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Transaction Status & Feedback Container (Requirement #4) -->
+          <div class="card glass-card tx-feedback-card hidden" id="txFeedbackCard">
+            <div class="card-header">
+              <div class="card-title">
+                <i class="fa-solid fa-receipt text-accent"></i> Transaction Execution Feedback
+              </div>
+              <span class="badge" id="txStatusBadge">Processing</span>
+            </div>
+            
+            <div class="card-body">
+              <!-- Stepper Progress -->
+              <div class="tx-stepper">
+                <div class="step-item active" id="step1">
+                  <div class="step-icon"><i class="fa-solid fa-gears"></i></div>
+                  <div class="step-label">Building XDR</div>
+                </div>
+                <div class="step-line" id="line1"></div>
+                <div class="step-item" id="step2">
+                  <div class="step-icon"><i class="fa-solid fa-pen-nib"></i></div>
+                  <div class="step-label">Signature / Key</div>
+                </div>
+                <div class="step-line" id="line2"></div>
+                <div class="step-item" id="step3">
+                  <div class="step-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+                  <div class="step-label">Horizon Submit</div>
+                </div>
+                <div class="step-line" id="line3"></div>
+                <div class="step-item" id="step4">
+                  <div class="step-icon"><i class="fa-solid fa-circle-check"></i></div>
+                  <div class="step-label">Confirmed</div>
+                </div>
+              </div>
+
+              <!-- Message Area -->
+              <div class="tx-message-box" id="txMessageBox">
+                <div class="spinner" id="txSpinner"></div>
+                <p id="txStatusText">Preparing Stellar Testnet transaction...</p>
+              </div>
+
+              <!-- Transaction Hash & Link Section (Requirement #4) -->
+              <div class="tx-details-box hidden" id="txDetailsBox">
+                <div class="detail-row">
+                  <span class="detail-label">Status:</span>
+                  <span class="badge badge-success" id="txResultStatus"><i class="fa-solid fa-check"></i> Success (Ledger Confirmed)</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">Transaction Hash:</span>
+                  <div class="hash-wrapper">
+                    <code id="txHashDisplay">----------------------------------------------------------------</code>
+                    <button class="btn-icon" id="btnCopyTxHash" title="Copy Hash">
+                      <i class="fa-regular fa-copy"></i>
+                    </button>
+                  </div>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">Stellar Explorer:</span>
+                  <a href="#" target="_blank" rel="noopener noreferrer" class="btn btn-outline-accent btn-sm" id="linkStellarExpert">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i> View on Stellar Expert (Testnet)
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: ATTENDANCE LEDGER & HISTORY -->
+      <section class="tab-content" id="tabHistory">
+        <div class="card glass-card">
+          <div class="card-header">
+            <div class="card-title">
+              <i class="fa-solid fa-database text-accent"></i> Immutable Attendance Ledger
+            </div>
+            <div class="card-actions">
+              <button class="btn btn-sm btn-outline" id="btnExportLedger">
+                <i class="fa-solid fa-file-csv"></i> Export CSV
+              </button>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="data-table" id="attendanceTable">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Student Name</th>
+                    <th>Student ID</th>
+                    <th>Class Session</th>
+                    <th>Timestamp</th>
+                    <th>XLM Fee</th>
+                    <th>Verification Status</th>
+                    <th>Tx Hash</th>
+                  </tr>
+                </thead>
+                <tbody id="tableBodyAttendance">
+                  <!-- Rendered dynamically -->
+                  <tr class="empty-row">
+                    <td colspan="8" class="text-center text-muted">
+                      No attendance transactions recorded yet. Submit your first check-in above!
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: ACTIVE CLASSES -->
+      <section class="tab-content" id="tabSessions">
+        <div class="sessions-grid">
+          
+          <div class="card glass-card session-card">
+            <div class="session-header">
+              <span class="badge badge-success">ACTIVE SESSION</span>
+              <span class="session-code">CS401-2026</span>
+            </div>
+            <h3>CS401: Distributed Systems & Blockchain Engineering</h3>
+            <p class="session-instructor"><i class="fa-solid fa-user-tie"></i> Prof. Elena Rostova</p>
+            <div class="session-meta">
+              <span><i class="fa-solid fa-clock"></i> 09:00 AM - 10:30 AM</span>
+              <span><i class="fa-solid fa-users"></i> 42 Registered</span>
+            </div>
+            <div class="session-progress-bar">
+              <div class="progress-fill" style="width: 85%;"></div>
+            </div>
+            <div class="session-footer">
+              <span>85% Attendance Verified</span>
+              <button class="btn btn-sm btn-outline-primary select-session-btn" data-session="CS401-2026">Check In Now</button>
+            </div>
+          </div>
+
+          <div class="card glass-card session-card">
+            <div class="session-header">
+              <span class="badge badge-success">ACTIVE SESSION</span>
+              <span class="session-code">W3101-2026</span>
+            </div>
+            <h3>W3101: Stellar Smart Contracts & Soroban Workshop</h3>
+            <p class="session-instructor"><i class="fa-solid fa-user-tie"></i> Dr. Marcus Vance</p>
+            <div class="session-meta">
+              <span><i class="fa-solid fa-clock"></i> 01:30 PM - 03:00 PM</span>
+              <span><i class="fa-solid fa-users"></i> 38 Registered</span>
+            </div>
+            <div class="session-progress-bar">
+              <div class="progress-fill" style="width: 92%;"></div>
+            </div>
+            <div class="session-footer">
+              <span>92% Attendance Verified</span>
+              <button class="btn btn-sm btn-outline-primary select-session-btn" data-session="W3101-2026">Check In Now</button>
+            </div>
+          </div>
+
+          <div class="card glass-card session-card">
+            <div class="session-header">
+              <span class="badge badge-warning">UPCOMING</span>
+              <span class="session-code">SEC202-2026</span>
+            </div>
+            <h3>SEC202: Cryptographic Protocols & Security</h3>
+            <p class="session-instructor"><i class="fa-solid fa-user-tie"></i> Prof. Sarah Jenkins</p>
+            <div class="session-meta">
+              <span><i class="fa-solid fa-clock"></i> 03:45 PM - 05:15 PM</span>
+              <span><i class="fa-solid fa-users"></i> 50 Registered</span>
+            </div>
+            <div class="session-progress-bar">
+              <div class="progress-fill" style="width: 60%;"></div>
+            </div>
+            <div class="session-footer">
+              <span>Session Starts Soon</span>
+              <button class="btn btn-sm btn-outline-primary select-session-btn" data-session="SEC202-2026">Check In Now</button>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="footer-content">
+        <p>StellarAttend &copy; 2026. Built on <a href="https://stellar.org" target="_blank" rel="noreferrer">Stellar Testnet</a> with <a href="https://freighter.app" target="_blank" rel="noreferrer">Freighter Wallet</a>.</p>
+        <div class="footer-links">
+          <a href="https://horizon-testnet.stellar.org" target="_blank" rel="noreferrer"><i class="fa-solid fa-server"></i> Horizon API</a>
+          <a href="https://stellar.expert/explorer/testnet" target="_blank" rel="noreferrer"><i class="fa-solid fa-magnifying-glass"></i> Stellar Expert</a>
+          <a href="https://freighter.app" target="_blank" rel="noreferrer"><i class="fa-solid fa-download"></i> Get Freighter</a>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Wallet Connection Modal -->
+  <div class="modal-overlay hidden" id="guideModal">
+    <div class="modal-card glass-card">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-wallet text-accent"></i> Choose Connection Method</h3>
+        <button class="btn-icon" id="btnCloseGuide"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+
+        <!-- Option 1: Instant 1-Click Connect -->
+        <div style="background: rgba(0, 240, 255, 0.08); border: 1px solid var(--border-glow); padding: 1.25rem; border-radius: var(--radius-md); margin-bottom: 1.25rem;">
+          <h4 style="color: var(--accent-cyan); font-size: 1rem; margin-bottom: 0.35rem; display: flex; align-items: center; gap: 0.4rem;">
+            <i class="fa-solid fa-bolt"></i> 1-Click Instant Testnet Connect (Recommended)
+          </h4>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.85rem;">
+            Instantly connects a live Stellar Testnet wallet account (`GAIH...`) without needing extension popups or passwords.
+          </p>
+          <button class="btn btn-accent btn-lg btn-block" id="btnModalInstantConnect">
+            <i class="fa-solid fa-bolt"></i> Connect Testnet Account Now
+          </button>
+        </div>
+
+        <!-- Option 2: Freighter Extension -->
+        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); padding: 1.25rem; border-radius: var(--radius-md); margin-bottom: 1.25rem;">
+          <h4 style="font-size: 0.95rem; margin-bottom: 0.35rem; display: flex; align-items: center; gap: 0.4rem;">
+            <i class="fa-solid fa-wallet"></i> Freighter Browser Extension
+          </h4>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.85rem;">
+            Connect using the official Freighter extension installed in Chrome toolbar (🧩 -> Freighter).
+          </p>
+          <button class="btn btn-primary btn-block" id="btnConnectFreighterDirect">
+            <i class="fa-solid fa-plug"></i> Connect Freighter Extension
+          </button>
+        </div>
+
+        <!-- Option 3: Custom Key -->
+        <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); padding: 1rem; border-radius: var(--radius-md);">
+          <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.4rem;">Custom Stellar Testnet Address (Starts with G):</label>
+          <div style="display: flex; gap: 0.5rem;">
+            <input type="text" id="inputCustomPublicKey" class="form-control code-font" placeholder="e.g. GAIH3ULLFQ4DGSECF2AR..." style="font-size: 0.8rem;">
+            <button class="btn btn-secondary btn-sm" id="btnSubmitCustomKey" style="white-space: nowrap;">Connect Key</button>
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <a href="https://www.freighter.app" target="_blank" rel="noreferrer" class="btn btn-xs btn-outline">
+          <i class="fa-solid fa-download"></i> Download Freighter Extension
+        </a>
+        <button class="btn btn-secondary btn-sm" id="btnCloseGuideBtn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Application Logic Modules -->
+  <script type="module" src="stellar-service.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
