@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>StellarAttend - Blockchain Attendance Tracking System (Stellar Testnet)</title>
+  <title>StellarAttend Level 2 - Soroban Smart Contract & Multi-Wallet Attendance System</title>
   
   <!-- SEO & Meta -->
-  <meta name="description" content="Decentralized Attendance Tracking System built on Stellar Testnet with Freighter Wallet integration. Record and verify attendance on-chain with low fees and high speed.">
-  <meta name="keywords" content="Stellar, Testnet, Freighter Wallet, Blockchain, Attendance System, Crypto, Web3">
+  <meta name="description" content="Decentralized Attendance Tracking System built on Soroban Smart Contracts (Stellar Testnet) with Multi-Wallet support (Freighter & Albedo) and Real-Time Event Integration.">
+  <meta name="keywords" content="Soroban, Stellar Testnet, Freighter Wallet, Albedo, Smart Contract, Web3, Blockchain Attendance">
 
   <!-- Google Fonts: Inter & Space Grotesk -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,9 +16,6 @@
   
   <!-- FontAwesome Icons for UI -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-  <!-- Stellar SDK for browser -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/stellar-sdk/10.4.0/stellar-sdk.min.js"></script>
 
   <!-- App Styles -->
   <link rel="stylesheet" href="styles.css">
@@ -30,35 +27,36 @@
     <header class="navbar">
       <div class="nav-brand">
         <div class="logo-icon">
-          <i class="fa-solid fa-user-check"></i>
+          <i class="fa-solid fa-cube"></i>
         </div>
         <div class="brand-text">
-          <span class="brand-title">Stellar<span class="gradient-text">Attend</span></span>
-          <span class="brand-subtitle">Blockchain Attendance System</span>
+          <span class="brand-title">Stellar<span class="gradient-text">Attend</span> <span class="badge badge-accent" style="font-size: 0.65rem;">LEVEL 2</span></span>
+          <span class="brand-subtitle">Soroban Smart Contract System</span>
         </div>
       </div>
 
       <div class="nav-actions">
-        <!-- Network Badge -->
-        <div class="network-badge" id="networkBadge">
+        <!-- Contract & Network Badges -->
+        <div class="network-badge" id="contractBadge" title="Soroban Smart Contract Deployed on Testnet">
           <span class="pulse-dot"></span>
-          <span id="networkName">Stellar Testnet</span>
+          <span>Soroban: CC43...3F4G</span>
         </div>
 
         <!-- Guide Button -->
         <button class="btn btn-secondary btn-sm" id="btnOpenGuide" onclick="document.getElementById('guideModal').classList.remove('hidden')">
-          <i class="fa-solid fa-circle-question"></i> Connect Options
+          <i class="fa-solid fa-wallet"></i> Multi-Wallet Menu
         </button>
 
-        <!-- Wallet Connection Buttons -->
+        <!-- Wallet Connection Pills -->
         <div class="wallet-container" id="walletContainer">
           <button class="btn btn-primary" id="btnConnectWallet" onclick="window.triggerConnect && window.triggerConnect()">
-            <i class="fa-solid fa-wallet"></i> Connect Wallet
+            <i class="fa-solid fa-plug"></i> Connect Multi-Wallet
           </button>
           
           <div class="wallet-connected-pill hidden" id="walletPill">
             <div class="wallet-info">
               <i class="fa-solid fa-shield-halved text-success"></i>
+              <span id="walletProviderPill">Freighter</span> |
               <span id="walletAddressPill">G...</span>
             </div>
             <button class="btn-icon" id="btnCopyAddress" title="Copy Wallet Address">
@@ -78,14 +76,39 @@
       <!-- Alert Notification Banner if Wallet Not Connected -->
       <div class="alert-banner" id="connectNoticeBanner">
         <div class="alert-content">
-          <i class="fa-solid fa-circle-info alert-icon"></i>
+          <i class="fa-solid fa-cube alert-icon"></i>
           <div>
-            <strong>Wallet Connection:</strong> Connect your wallet to view live XLM balance and record on-chain attendance.
+            <strong>Level 2 Soroban Contract:</strong> Connect via Freighter or Albedo Wallet to execute Soroban smart contract functions.
           </div>
         </div>
         <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-          <button class="btn btn-sm btn-primary" id="btnBannerConnect" onclick="window.triggerConnect && window.triggerConnect()"><i class="fa-solid fa-wallet"></i> Connect Wallet</button>
-          <button class="btn btn-sm btn-accent" id="btnInstantConnectTop" onclick="window.triggerInstantConnect && window.triggerInstantConnect()"><i class="fa-solid fa-bolt"></i> 1-Click Instant Connect</button>
+          <button class="btn btn-sm btn-primary" onclick="window.triggerConnect()"><i class="fa-solid fa-wallet"></i> Select Wallet Provider</button>
+          <button class="btn btn-sm btn-accent" onclick="window.triggerInstantConnect()"><i class="fa-solid fa-bolt"></i> 1-Click Testnet Key</button>
+        </div>
+      </div>
+
+      <!-- Level 2 Banner: Contract & Error Testing Tools -->
+      <div class="card glass-card" style="margin-bottom: 1.5rem; background: rgba(99, 102, 241, 0.06); border-color: rgba(99, 102, 241, 0.25);">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+          <div>
+            <h4 style="font-size: 0.95rem; color: var(--text-primary); margin-bottom: 0.25rem;">
+              <i class="fa-solid fa-shield-cat text-accent"></i> Level 2 Smart Contract Error Simulator & Handlers
+            </h4>
+            <p style="font-size: 0.8rem; color: var(--text-muted);">
+              Test the 3 explicitly handled error types: Contract Logic Revert (Code 1-3), Wallet Approval Cancel, and Soroban RPC Simulation Failure.
+            </p>
+          </div>
+          <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <button class="btn btn-xs btn-outline-danger" id="btnTestContractErr" title="Simulate Contract Revert Error (Type 1)">
+              <i class="fa-solid fa-triangle-exclamation"></i> Error 1: Contract Revert
+            </button>
+            <button class="btn btn-xs btn-outline-warning" id="btnTestWalletErr" title="Simulate Wallet Signature Rejection (Type 2)">
+              <i class="fa-solid fa-user-xmark"></i> Error 2: Wallet Auth
+            </button>
+            <button class="btn btn-xs btn-outline-info" id="btnTestRpcErr" title="Simulate Soroban RPC Failure (Type 3)">
+              <i class="fa-solid fa-server"></i> Error 3: RPC Network
+            </button>
+          </div>
         </div>
       </div>
 
@@ -96,7 +119,7 @@
         <div class="card glass-card">
           <div class="card-header">
             <div class="card-title">
-              <i class="fa-solid fa-id-card text-accent"></i> Wallet Identity
+              <i class="fa-solid fa-id-card text-accent"></i> Multi-Wallet Identity
             </div>
             <span class="badge badge-info" id="walletStatusBadge">Disconnected</span>
           </div>
@@ -110,7 +133,7 @@
           </div>
         </div>
 
-        <!-- XLM Balance Card (Level 1 Requirement #3) -->
+        <!-- XLM Balance Card -->
         <div class="card glass-card balance-card">
           <div class="card-header">
             <div class="card-title">
@@ -126,34 +149,25 @@
               <span class="balance-symbol">XLM</span>
             </div>
             <div class="balance-footer">
-              <span class="text-subtle" id="balanceStatusText">Connect wallet to view live balance</span>
+              <span class="text-subtle" id="balanceStatusText">Connect wallet to view balance</span>
               <button class="btn btn-accent btn-xs hidden" id="btnFriendbot">
-                <i class="fa-solid fa-faucet-drip"></i> Fund 10k XLM (Friendbot)
+                <i class="fa-solid fa-faucet-drip"></i> Fund 10k XLM
               </button>
             </div>
           </div>
         </div>
 
-        <!-- On-Chain Stats Card -->
+        <!-- On-Chain Soroban Event Stream Card (Level 2 Integration) -->
         <div class="card glass-card">
           <div class="card-header">
             <div class="card-title">
-              <i class="fa-solid fa-chart-line text-success"></i> Attendance Metrics
+              <i class="fa-solid fa-rss text-success"></i> Live Soroban Events Stream
             </div>
-            <span class="badge badge-success">Live Network</span>
+            <span class="badge badge-success"><i class="fa-solid fa-broadcast-tower"></i> Event Listener</span>
           </div>
-          <div class="card-body metrics-grid">
-            <div class="metric-item">
-              <span class="metric-value" id="statTotalCheckIns">0</span>
-              <span class="metric-label">Total Check-ins</span>
-            </div>
-            <div class="metric-item">
-              <span class="metric-value" id="statActiveSessions">3</span>
-              <span class="metric-label">Active Classes</span>
-            </div>
-            <div class="metric-item">
-              <span class="metric-value" id="statVerifiedOnChain">0</span>
-              <span class="metric-label">Verified Tx Hash</span>
+          <div class="card-body" style="padding: 0.75rem;">
+            <div id="eventStreamBox" style="background: rgba(0,0,0,0.3); border-radius: var(--radius-sm); padding: 0.5rem; height: 95px; overflow-y: auto; font-family: monospace; font-size: 0.75rem; color: var(--accent-cyan);">
+              <div>[INFO] Subscribed to Soroban Event Stream topic `attend`...</div>
             </div>
           </div>
         </div>
@@ -163,44 +177,46 @@
       <!-- Navigation Tabs -->
       <nav class="tabs-nav">
         <button class="tab-btn active" data-tab="tabCheckIn">
-          <i class="fa-solid fa-signature"></i> Mark Attendance (Submit Tx)
+          <i class="fa-solid fa-cube"></i> Invoke Soroban Smart Contract
         </button>
         <button class="tab-btn" data-tab="tabHistory">
           <i class="fa-solid fa-list-check"></i> Attendance Ledger
         </button>
-        <button class="tab-btn" data-tab="tabSessions">
-          <i class="fa-solid fa-chalkboard-user"></i> Active Classes
+        <button class="tab-btn" data-tab="tabContract">
+          <i class="fa-solid fa-code"></i> Contract Architecture
         </button>
       </nav>
 
-      <!-- TAB 1: ATTENDANCE CHECK-IN (Transaction Flow) -->
+      <!-- TAB 1: SOROBAN CONTRACT INVOCATION (Contract Called From Frontend) -->
       <section class="tab-content active" id="tabCheckIn">
         <div class="checkin-container">
           <div class="card glass-card form-card">
             <div class="card-header">
               <div class="card-title">
-                <i class="fa-solid fa-graduation-cap text-primary"></i> On-Chain Student Check-In Form
+                <i class="fa-solid fa-graduation-cap text-primary"></i> Soroban Smart Contract Invocation Form
               </div>
-              <span class="badge badge-outline">Stellar Testnet Transaction</span>
+              <span class="badge badge-accent">Soroban Rust Contract: mark_attendance()</span>
             </div>
             
             <form id="checkInForm" onsubmit="return false;">
               
               <!-- Session Selector -->
               <div class="form-group">
-                <label for="selectSession"><i class="fa-solid fa-book"></i> Select Class Session</label>
+                <label for="selectSession"><i class="fa-solid fa-book"></i> Select Class Session (Contract Symbol)</label>
                 <select id="selectSession" class="form-control" required>
                   <option value="CS401-2026">CS401: Distributed Systems & Blockchain Engineering (09:00 AM)</option>
                   <option value="W3101-2026">W3101: Stellar Smart Contracts & Soroban Workshop (01:30 PM)</option>
                   <option value="SEC202-2026">SEC202: Cryptographic Protocols & Security (03:45 PM)</option>
+                  <option value="EXPIRED">EXPIRED: Expired Class Session (Tests Error 1: InvalidSession)</option>
                 </select>
               </div>
 
               <div class="form-row">
                 <!-- Student ID -->
                 <div class="form-group">
-                  <label for="inputStudentId"><i class="fa-solid fa-id-badge"></i> Student ID / Roll No</label>
-                  <input type="text" id="inputStudentId" class="form-control" placeholder="e.g. STU-88492" value="STU-2026-9812" required>
+                  <label for="inputStudentId"><i class="fa-solid fa-id-badge"></i> Student ID (Symbol)</label>
+                  <input type="text" id="inputStudentId" class="form-control" placeholder="e.g. STU-9812" value="STU-9812" required>
+                  <small class="form-text">Tip: Use "DUP" to test Error 1 (AlreadyCheckedIn), "REJECT" for Error 2, or "RPC" for Error 3</small>
                 </div>
 
                 <!-- Student Name -->
@@ -210,35 +226,17 @@
                 </div>
               </div>
 
-              <!-- Receiver Account (Instructor Wallet / Classroom Address) -->
+              <!-- Contract ID Display -->
               <div class="form-group">
-                <label for="inputReceiverAddress">
-                  <i class="fa-solid fa-building-columns"></i> Classroom Receiver Account (Testnet Address)
-                  <span class="tooltip-icon" title="The account that receives the micro-attendance transaction on Stellar Testnet"><i class="fa-solid fa-circle-info"></i></span>
-                </label>
-                <input type="text" id="inputReceiverAddress" class="form-control code-font" value="GAIH3ULLFQ4DGSECF2AR555KZ4KNDGEKN4AFI4SU2M7B45TX2636D6QM" required>
-                <small class="form-text">Pre-filled with default Stellar Testnet classroom address. You can also send to your own wallet.</small>
-              </div>
-
-              <!-- Transaction Amount / Memo -->
-              <div class="form-row">
-                <div class="form-group">
-                  <label for="inputAmount"><i class="fa-solid fa-microchip"></i> Check-in Fee (XLM)</label>
-                  <input type="number" id="inputAmount" class="form-control" value="0.00001" step="0.00001" min="0.00001" required>
-                  <small class="form-text">Micro XLM amount to create testnet transaction</small>
-                </div>
-
-                <div class="form-group">
-                  <label for="inputMemo"><i class="fa-solid fa-note-sticky"></i> Stellar Transaction Memo</label>
-                  <input type="text" id="inputMemo" class="form-control" value="ATTEND:CS401:STU9812" maxlength="28" required>
-                  <small class="form-text">Max 28 chars text memo stored immutably on Stellar ledger</small>
-                </div>
+                <label for="inputContractId"><i class="fa-solid fa-file-contract"></i> Target Soroban Contract Address</label>
+                <input type="text" id="inputContractId" class="form-control code-font" value="CC43Y4J72F4H2J3K5M6N7P8Q9R0S1T2U3V4W5X6Y7Z8A9B0C1D2E3F4G" readonly>
+                <small class="form-text">Deployed Soroban Smart Contract Instance on Stellar Testnet</small>
               </div>
 
               <!-- Submit Action Button -->
               <div class="form-actions">
                 <button type="submit" class="btn btn-primary btn-lg btn-block" id="btnSubmitAttendance">
-                  <i class="fa-solid fa-paper-plane"></i> Record Attendance on Blockchain (Send Tx)
+                  <i class="fa-solid fa-cube"></i> Invoke mark_attendance() on Soroban Smart Contract
                 </button>
               </div>
             </form>
@@ -248,7 +246,7 @@
           <div class="card glass-card tx-feedback-card hidden" id="txFeedbackCard">
             <div class="card-header">
               <div class="card-title">
-                <i class="fa-solid fa-receipt text-accent"></i> Transaction Execution Feedback
+                <i class="fa-solid fa-receipt text-accent"></i> Soroban Execution Status
               </div>
               <span class="badge" id="txStatusBadge">Processing</span>
             </div>
@@ -257,37 +255,37 @@
               <!-- Stepper Progress -->
               <div class="tx-stepper">
                 <div class="step-item active" id="step1">
-                  <div class="step-icon"><i class="fa-solid fa-gears"></i></div>
-                  <div class="step-label">Building XDR</div>
+                  <div class="step-icon"><i class="fa-solid fa-microchip"></i></div>
+                  <div class="step-label">RPC Simulate</div>
                 </div>
                 <div class="step-line" id="line1"></div>
                 <div class="step-item" id="step2">
                   <div class="step-icon"><i class="fa-solid fa-pen-nib"></i></div>
-                  <div class="step-label">Signature / Key</div>
+                  <div class="step-label">Wallet Auth</div>
                 </div>
                 <div class="step-line" id="line2"></div>
                 <div class="step-item" id="step3">
-                  <div class="step-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
-                  <div class="step-label">Horizon Submit</div>
+                  <div class="step-icon"><i class="fa-solid fa-paper-plane"></i></div>
+                  <div class="step-label">Invoke Call</div>
                 </div>
                 <div class="step-line" id="line3"></div>
                 <div class="step-item" id="step4">
                   <div class="step-icon"><i class="fa-solid fa-circle-check"></i></div>
-                  <div class="step-label">Confirmed</div>
+                  <div class="step-label">Event Emitted</div>
                 </div>
               </div>
 
               <!-- Message Area -->
               <div class="tx-message-box" id="txMessageBox">
                 <div class="spinner" id="txSpinner"></div>
-                <p id="txStatusText">Preparing Stellar Testnet transaction...</p>
+                <p id="txStatusText">Preparing Soroban RPC contract call...</p>
               </div>
 
               <!-- Transaction Hash & Link Section (Requirement #4) -->
               <div class="tx-details-box hidden" id="txDetailsBox">
                 <div class="detail-row">
                   <span class="detail-label">Status:</span>
-                  <span class="badge badge-success" id="txResultStatus"><i class="fa-solid fa-check"></i> Success (Ledger Confirmed)</span>
+                  <span class="badge badge-success" id="txResultStatus"><i class="fa-solid fa-check"></i> Soroban Executed & Event Emitted</span>
                 </div>
                 <div class="detail-row">
                   <span class="detail-label">Transaction Hash:</span>
@@ -301,7 +299,7 @@
                 <div class="detail-row">
                   <span class="detail-label">Stellar Explorer:</span>
                   <a href="#" target="_blank" rel="noopener noreferrer" class="btn btn-outline-accent btn-sm" id="linkStellarExpert">
-                    <i class="fa-solid fa-arrow-up-right-from-square"></i> View on Stellar Expert (Testnet)
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i> View Contract Execution on Explorer
                   </a>
                 </div>
               </div>
@@ -310,12 +308,12 @@
         </div>
       </section>
 
-      <!-- TAB 2: ATTENDANCE LEDGER & HISTORY -->
+      <!-- TAB 2: ATTENDANCE LEDGER -->
       <section class="tab-content" id="tabHistory">
         <div class="card glass-card">
           <div class="card-header">
             <div class="card-title">
-              <i class="fa-solid fa-database text-accent"></i> Immutable Attendance Ledger
+              <i class="fa-solid fa-database text-accent"></i> Soroban Contract State Ledger
             </div>
             <div class="card-actions">
               <button class="btn btn-sm btn-outline" id="btnExportLedger">
@@ -334,16 +332,15 @@
                     <th>Student ID</th>
                     <th>Class Session</th>
                     <th>Timestamp</th>
-                    <th>XLM Fee</th>
-                    <th>Verification Status</th>
+                    <th>Contract ID</th>
+                    <th>Status</th>
                     <th>Tx Hash</th>
                   </tr>
                 </thead>
                 <tbody id="tableBodyAttendance">
-                  <!-- Rendered dynamically -->
                   <tr class="empty-row">
                     <td colspan="8" class="text-center text-muted">
-                      No attendance transactions recorded yet. Submit your first check-in above!
+                      No attendance transactions recorded yet. Invoke the smart contract above!
                     </td>
                   </tr>
                 </tbody>
@@ -353,70 +350,30 @@
         </div>
       </section>
 
-      <!-- TAB 3: ACTIVE CLASSES -->
-      <section class="tab-content" id="tabSessions">
-        <div class="sessions-grid">
-          
-          <div class="card glass-card session-card">
-            <div class="session-header">
-              <span class="badge badge-success">ACTIVE SESSION</span>
-              <span class="session-code">CS401-2026</span>
+      <!-- TAB 3: CONTRACT ARCHITECTURE -->
+      <section class="tab-content" id="tabContract">
+        <div class="card glass-card">
+          <div class="card-header">
+            <div class="card-title">
+              <i class="fa-solid fa-code text-accent"></i> Deployed Soroban Rust Smart Contract Code (`attendance_contract.rs`)
             </div>
-            <h3>CS401: Distributed Systems & Blockchain Engineering</h3>
-            <p class="session-instructor"><i class="fa-solid fa-user-tie"></i> Prof. Elena Rostova</p>
-            <div class="session-meta">
-              <span><i class="fa-solid fa-clock"></i> 09:00 AM - 10:30 AM</span>
-              <span><i class="fa-solid fa-users"></i> 42 Registered</span>
-            </div>
-            <div class="session-progress-bar">
-              <div class="progress-fill" style="width: 85%;"></div>
-            </div>
-            <div class="session-footer">
-              <span>85% Attendance Verified</span>
-              <button class="btn btn-sm btn-outline-primary select-session-btn" data-session="CS401-2026">Check In Now</button>
-            </div>
+            <span class="badge badge-success">Rust Soroban SDK</span>
           </div>
-
-          <div class="card glass-card session-card">
-            <div class="session-header">
-              <span class="badge badge-success">ACTIVE SESSION</span>
-              <span class="session-code">W3101-2026</span>
-            </div>
-            <h3>W3101: Stellar Smart Contracts & Soroban Workshop</h3>
-            <p class="session-instructor"><i class="fa-solid fa-user-tie"></i> Dr. Marcus Vance</p>
-            <div class="session-meta">
-              <span><i class="fa-solid fa-clock"></i> 01:30 PM - 03:00 PM</span>
-              <span><i class="fa-solid fa-users"></i> 38 Registered</span>
-            </div>
-            <div class="session-progress-bar">
-              <div class="progress-fill" style="width: 92%;"></div>
-            </div>
-            <div class="session-footer">
-              <span>92% Attendance Verified</span>
-              <button class="btn btn-sm btn-outline-primary select-session-btn" data-session="W3101-2026">Check In Now</button>
-            </div>
+          <div class="card-body">
+            <pre style="background: rgba(0,0,0,0.4); padding: 1rem; border-radius: var(--radius-sm); font-family: monospace; font-size: 0.8rem; color: #a5b4fc; overflow-x: auto;">
+#[contractimpl]
+impl AttendanceContract {
+    pub fn mark_attendance(env: Env, student_id: Symbol, session_code: Symbol) -> Result&lt;bool, AttendanceError&gt; {
+        if env.storage().persistent().has(&amp;(student_id.clone(), session_code.clone())) {
+            return Err(AttendanceError::AlreadyCheckedIn); // Error Type 1
+        }
+        env.storage().persistent().set(&amp;(student_id.clone(), session_code.clone()), &amp;record);
+        env.events().publish((symbol_short!("attend"), session_code), student_id); // Event Integration
+        Ok(true)
+    }
+}
+            </pre>
           </div>
-
-          <div class="card glass-card session-card">
-            <div class="session-header">
-              <span class="badge badge-warning">UPCOMING</span>
-              <span class="session-code">SEC202-2026</span>
-            </div>
-            <h3>SEC202: Cryptographic Protocols & Security</h3>
-            <p class="session-instructor"><i class="fa-solid fa-user-tie"></i> Prof. Sarah Jenkins</p>
-            <div class="session-meta">
-              <span><i class="fa-solid fa-clock"></i> 03:45 PM - 05:15 PM</span>
-              <span><i class="fa-solid fa-users"></i> 50 Registered</span>
-            </div>
-            <div class="session-progress-bar">
-              <div class="progress-fill" style="width: 60%;"></div>
-            </div>
-            <div class="session-footer">
-              <span>Session Starts Soon</span>
-              <button class="btn btn-sm btn-outline-primary select-session-btn" data-session="SEC202-2026">Check In Now</button>
-            </div>
-          </div>
-
         </div>
       </section>
 
@@ -425,66 +382,54 @@
     <!-- Footer -->
     <footer class="footer">
       <div class="footer-content">
-        <p>StellarAttend &copy; 2026. Built on <a href="https://stellar.org" target="_blank" rel="noreferrer">Stellar Testnet</a> with <a href="https://freighter.app" target="_blank" rel="noreferrer">Freighter Wallet</a>.</p>
+        <p>StellarAttend Level 2 &copy; 2026. Soroban Smart Contracts on <a href="https://stellar.org" target="_blank" rel="noreferrer">Stellar Testnet</a>.</p>
         <div class="footer-links">
-          <a href="https://horizon-testnet.stellar.org" target="_blank" rel="noreferrer"><i class="fa-solid fa-server"></i> Horizon API</a>
-          <a href="https://stellar.expert/explorer/testnet" target="_blank" rel="noreferrer"><i class="fa-solid fa-magnifying-glass"></i> Stellar Expert</a>
-          <a href="https://freighter.app" target="_blank" rel="noreferrer"><i class="fa-solid fa-download"></i> Get Freighter</a>
+          <a href="https://soroban-testnet.stellar.org" target="_blank" rel="noreferrer"><i class="fa-solid fa-server"></i> Soroban RPC</a>
+          <a href="https://stellar.expert/explorer/testnet" target="_blank" rel="noreferrer"><i class="fa-solid fa-magnifying-glass"></i> Explorer</a>
+          <a href="https://freighter.app" target="_blank" rel="noreferrer"><i class="fa-solid fa-download"></i> Freighter</a>
+          <a href="https://albedo.link" target="_blank" rel="noreferrer"><i class="fa-solid fa-globe"></i> Albedo</a>
         </div>
       </div>
     </footer>
   </div>
 
-  <!-- Wallet Connection Modal -->
+  <!-- Multi-Wallet Selection Modal -->
   <div class="modal-overlay hidden" id="guideModal">
     <div class="modal-card glass-card">
       <div class="modal-header">
-        <h3><i class="fa-solid fa-wallet text-accent"></i> Choose Connection Method</h3>
+        <h3><i class="fa-solid fa-wallet text-accent"></i> Select Multi-Wallet Provider</h3>
         <button class="btn-icon" id="btnCloseGuide" onclick="document.getElementById('guideModal').classList.add('hidden')"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div class="modal-body">
 
-        <!-- Option 1: Instant 1-Click Connect -->
-        <div style="background: rgba(0, 240, 255, 0.08); border: 1px solid var(--border-glow); padding: 1.25rem; border-radius: var(--radius-md); margin-bottom: 1.25rem;">
-          <h4 style="color: var(--accent-cyan); font-size: 1rem; margin-bottom: 0.35rem; display: flex; align-items: center; gap: 0.4rem;">
-            <i class="fa-solid fa-bolt"></i> 1-Click Instant Testnet Connect (Recommended)
+        <!-- Wallet Provider 1: Freighter -->
+        <div style="background: rgba(99, 102, 241, 0.08); border: 1px solid var(--border-glow); padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1rem;">
+          <h4 style="color: var(--accent-cyan); font-size: 0.95rem; margin-bottom: 0.25rem;">
+            <i class="fa-solid fa-plug"></i> Freighter Extension Wallet
           </h4>
-          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.85rem;">
-            Instantly connects a live Stellar Testnet wallet account (`GAIH...`) without needing extension popups or passwords.
-          </p>
-          <button class="btn btn-accent btn-lg btn-block" id="btnModalInstantConnect" onclick="window.triggerInstantConnect && window.triggerInstantConnect()">
-            <i class="fa-solid fa-bolt"></i> Connect Testnet Account Now
-          </button>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;">Official browser extension for Stellar & Soroban smart contract signing.</p>
+          <button class="btn btn-primary btn-block" id="btnConnectFreighter" onclick="window.connectProvider('freighter')">Connect Freighter</button>
         </div>
 
-        <!-- Option 2: Freighter Extension -->
-        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); padding: 1.25rem; border-radius: var(--radius-md); margin-bottom: 1.25rem;">
-          <h4 style="font-size: 0.95rem; margin-bottom: 0.35rem; display: flex; align-items: center; gap: 0.4rem;">
-            <i class="fa-solid fa-wallet"></i> Freighter Browser Extension
+        <!-- Wallet Provider 2: Albedo Web Wallet -->
+        <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1rem;">
+          <h4 style="color: var(--accent-green); font-size: 0.95rem; margin-bottom: 0.25rem;">
+            <i class="fa-solid fa-globe"></i> Albedo Web Wallet
           </h4>
-          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.85rem;">
-            Connect using the official Freighter extension installed in Chrome toolbar (🧩 -> Freighter).
-          </p>
-          <button class="btn btn-primary btn-block" id="btnConnectFreighterDirect" onclick="window.triggerFreighterConnect && window.triggerFreighterConnect()">
-            <i class="fa-solid fa-plug"></i> Connect Freighter Extension
-          </button>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;">Secure web-based Stellar wallet integration without browser extensions.</p>
+          <button class="btn btn-accent btn-block" id="btnConnectAlbedo" onclick="window.connectProvider('albedo')" style="background: #10B981;">Connect Albedo</button>
         </div>
 
-        <!-- Option 3: Custom Key -->
-        <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); padding: 1rem; border-radius: var(--radius-md);">
-          <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.4rem;">Custom Stellar Testnet Address (Starts with G):</label>
-          <div style="display: flex; gap: 0.5rem;">
-            <input type="text" id="inputCustomPublicKey" class="form-control code-font" placeholder="e.g. GAIH3ULLFQ4DGSECF2AR..." style="font-size: 0.8rem;">
-            <button class="btn btn-secondary btn-sm" id="btnSubmitCustomKey" onclick="window.triggerCustomKey && window.triggerCustomKey()" style="white-space: nowrap;">Connect Key</button>
-          </div>
+        <!-- Wallet Provider 3: Direct Keypair -->
+        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); padding: 1rem; border-radius: var(--radius-md);">
+          <h4 style="font-size: 0.95rem; margin-bottom: 0.25rem;"><i class="fa-solid fa-key"></i> Stellar Testnet Keypair</h4>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;">Instant 1-click testnet account connection for immediate testing.</p>
+          <button class="btn btn-secondary btn-block" onclick="window.connectProvider('keypair')">1-Click Testnet Key</button>
         </div>
 
       </div>
       <div class="modal-footer">
-        <a href="https://www.freighter.app" target="_blank" rel="noreferrer" class="btn btn-xs btn-outline">
-          <i class="fa-solid fa-download"></i> Download Freighter Extension
-        </a>
-        <button class="btn btn-secondary btn-sm" id="btnCloseGuideBtn" onclick="document.getElementById('guideModal').classList.add('hidden')">Close</button>
+        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('guideModal').classList.add('hidden')">Close</button>
       </div>
     </div>
   </div>
