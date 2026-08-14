@@ -1,36 +1,34 @@
 import {
-  isFreighterInstalled,
-  connectFreighterWallet,
+  connectWalletProvider,
   getXlmBalance,
   requestFriendbotFunding,
-  submitAttendanceTransaction,
+  invokeSorobanContract,
+  subscribeSorobanEvents,
+  CONTRACT_ID,
   DEFAULT_TESTNET_ACCOUNT,
+  ErrorTypes,
 } from './stellar-service.js';
 
 // Application State
 const state = {
   wallet: null,
+  walletProvider: 'Disconnected',
   isDemoMode: false,
   balance: '0.00',
   records: [],
   totalCheckIns: 0,
   verifiedTxCount: 0,
   balanceInterval: null,
+  unsubscribeEvents: null,
 };
 
 // DOM Elements
 const elements = {
   btnConnectWallet: document.getElementById('btnConnectWallet'),
-  btnBannerConnect: document.getElementById('btnBannerConnect'),
-  btnInstantConnectTop: document.getElementById('btnInstantConnectTop'),
-  btnModalInstantConnect: document.getElementById('btnModalInstantConnect'),
-  btnConnectFreighterDirect: document.getElementById('btnConnectFreighterDirect'),
-  btnSubmitCustomKey: document.getElementById('btnSubmitCustomKey'),
-  inputCustomPublicKey: document.getElementById('inputCustomPublicKey'),
   btnDisconnectWallet: document.getElementById('btnDisconnectWallet'),
   btnCopyAddress: document.getElementById('btnCopyAddress'),
-  walletContainer: document.getElementById('walletContainer'),
   walletPill: document.getElementById('walletPill'),
+  walletProviderPill: document.getElementById('walletProviderPill'),
   walletAddressPill: document.getElementById('walletAddressPill'),
   connectNoticeBanner: document.getElementById('connectNoticeBanner'),
   walletStatusBadge: document.getElementById('walletStatusBadge'),
@@ -53,9 +51,6 @@ const elements = {
   selectSession: document.getElementById('selectSession'),
   inputStudentId: document.getElementById('inputStudentId'),
   inputStudentName: document.getElementById('inputStudentName'),
-  inputReceiverAddress: document.getElementById('inputReceiverAddress'),
-  inputAmount: document.getElementById('inputAmount'),
-  inputMemo: document.getElementById('inputMemo'),
   btnSubmitAttendance: document.getElementById('btnSubmitAttendance'),
 
   txFeedbackCard: document.getElementById('txFeedbackCard'),
@@ -75,56 +70,51 @@ const elements = {
 
   tableBodyAttendance: document.getElementById('tableBodyAttendance'),
   btnExportLedger: document.getElementById('btnExportLedger'),
+  eventStreamBox: document.getElementById('eventStreamBox'),
 
-  btnOpenGuide: document.getElementById('btnOpenGuide'),
-  btnCloseGuide: document.getElementById('btnCloseGuide'),
-  btnCloseGuideBtn: document.getElementById('btnCloseGuideBtn'),
+  btnTestContractErr: document.getElementById('btnTestContractErr'),
+  btnTestWalletErr: document.getElementById('btnTestWalletErr'),
+  btnTestRpcErr: document.getElementById('btnTestRpcErr'),
+
   guideModal: document.getElementById('guideModal'),
-
   toastContainer: document.getElementById('toastContainer'),
 };
 
-// Global window trigger functions for instant execution
-window.triggerConnect = () => {
-  const modal = document.getElementById('guideModal');
-  if (modal) modal.classList.remove('hidden');
+// Global Multi-Wallet Connector Trigger
+window.connectProvider = async (providerType) => {
+  try {
+    showToast(`Connecting via ${providerType.toUpperCase()}...`, 'info');
+    const res = await connectWalletProvider(providerType);
+
+    if (res.success && res.publicKey) {
+      state.walletProvider = res.provider || providerType;
+      state.isDemoMode = res.isFallback || false;
+      setConnectedState(res.publicKey);
+      elements.guideModal.classList.add('hidden');
+      showToast(`Connected via ${state.walletProvider}!`, 'success');
+    }
+  } catch (err) {
+    handleStructuredError(err);
+  }
 };
 
-window.triggerInstantConnect = () => {
-  state.isDemoMode = true;
-  setConnectedState(DEFAULT_TESTNET_ACCOUNT);
-  const modal = document.getElementById('guideModal');
-  if (modal) modal.classList.add('hidden');
-  showToast('Successfully connected to Stellar Testnet Account!', 'success');
-};
+window.triggerConnect = () => elements.guideModal.classList.remove('hidden');
+window.triggerInstantConnect = () => window.connectProvider('keypair');
+window.triggerDisconnect = () => handleDisconnectWallet();
 
-window.triggerFreighterConnect = async () => {
-  handleConnectWallet();
-};
-
-window.triggerDisconnect = () => {
-  handleDisconnectWallet();
-};
-
-window.triggerCustomKey = () => {
-  handleCustomKeyConnect();
-};
-
-// Initialize Application
-document.addEventListener('DOMContentLoaded', async () => {
+// Initialize Level 2 Application
+document.addEventListener('DOMContentLoaded', () => {
   initTabs();
-  initModal();
   initEventListeners();
   loadSavedLedger();
-  
-  // Auto reconnect if previously saved
+  startEventStreamListener();
+
+  // Auto-connect saved wallet if available
   const savedWallet = localStorage.getItem('stellar_attend_wallet');
+  const savedProvider = localStorage.getItem('stellar_attend_provider') || 'Freighter';
   if (savedWallet) {
-    try {
-      setConnectedState(savedWallet.trim().length === 56 ? savedWallet : DEFAULT_TESTNET_ACCOUNT);
-    } catch (e) {
-      console.warn('Auto-reconnect failed:', e);
-    }
+    state.walletProvider = savedProvider;
+    setConnectedState(savedWallet);
   }
 });
 
@@ -132,10 +122,8 @@ function initTabs() {
   elements.tabBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       const targetTab = btn.getAttribute('data-tab');
-
       elements.tabBtns.forEach(b => b.classList.remove('active'));
       elements.tabContents.forEach(c => c.classList.remove('active'));
-
       btn.classList.add('active');
       document.getElementById(targetTab)?.classList.add('active');
     });
@@ -144,45 +132,17 @@ function initTabs() {
   document.querySelectorAll('.select-session-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       const sessionCode = e.target.getAttribute('data-session');
-      if (sessionCode) {
-        elements.selectSession.value = sessionCode;
-        updateMemoField();
-      }
+      if (sessionCode) elements.selectSession.value = sessionCode;
       elements.tabBtns[0].click();
     });
   });
 }
 
-function initModal() {
-  const open = () => elements.guideModal.classList.remove('hidden');
-  const close = () => elements.guideModal.classList.add('hidden');
-
-  elements.btnOpenGuide.addEventListener('click', open);
-  elements.btnCloseGuide.addEventListener('click', close);
-  elements.btnCloseGuideBtn.addEventListener('click', close);
-
-  elements.guideModal.addEventListener('click', (e) => {
-    if (e.target === elements.guideModal) close();
-  });
-}
-
 function initEventListeners() {
-  if (elements.btnConnectWallet) elements.btnConnectWallet.addEventListener('click', window.triggerConnect);
-  if (elements.btnBannerConnect) elements.btnBannerConnect.addEventListener('click', window.triggerConnect);
-  if (elements.btnConnectFreighterDirect) elements.btnConnectFreighterDirect.addEventListener('click', window.triggerFreighterConnect);
-  if (elements.btnModalInstantConnect) elements.btnModalInstantConnect.addEventListener('click', window.triggerInstantConnect);
-  if (elements.btnInstantConnectTop) elements.btnInstantConnectTop.addEventListener('click', window.triggerInstantConnect);
-
-  if (elements.btnSubmitCustomKey) {
-    elements.btnSubmitCustomKey.addEventListener('click', handleCustomKeyConnect);
-  }
-
   elements.btnDisconnectWallet.addEventListener('click', handleDisconnectWallet);
 
   elements.btnCopyAddress.addEventListener('click', () => {
-    if (state.wallet) {
-      copyToClipboard(state.wallet, 'Wallet address copied to clipboard!');
-    }
+    if (state.wallet) copyToClipboard(state.wallet, 'Wallet address copied!');
   });
 
   elements.btnRefreshBalance.addEventListener('click', () => {
@@ -191,66 +151,46 @@ function initEventListeners() {
   });
 
   elements.btnFriendbot.addEventListener('click', handleFriendbotFunding);
-
-  elements.selectSession.addEventListener('change', updateMemoField);
-  elements.inputStudentId.addEventListener('input', updateMemoField);
-
   elements.checkInForm.addEventListener('submit', handleAttendanceSubmit);
 
   elements.btnCopyTxHash.addEventListener('click', () => {
     const hash = elements.txHashDisplay.textContent;
-    if (hash && hash !== '----------------------------------------------------------------') {
-      copyToClipboard(hash, 'Transaction Hash copied to clipboard!');
-    }
+    if (hash && hash.length > 20) copyToClipboard(hash, 'Transaction Hash copied!');
   });
 
   elements.btnExportLedger.addEventListener('click', exportLedgerCSV);
-}
 
-function updateMemoField() {
-  const session = elements.selectSession.value.split('-')[0];
-  const studentId = elements.inputStudentId.value.replace(/[^a-zA-Z0-9]/g, '').slice(-8);
-  if (session && studentId) {
-    elements.inputMemo.value = `ATTEND:${session}:${studentId}`.slice(0, 28);
+  // Level 2 Handled Error Type Simulator Listeners
+  if (elements.btnTestContractErr) {
+    elements.btnTestContractErr.addEventListener('click', () => {
+      elements.inputStudentId.value = 'STU-DUP';
+      showToast('Simulating Error Type 1: Soroban Contract Revert (AlreadyCheckedIn)...', 'info');
+      elements.checkInForm.dispatchEvent(new Event('submit'));
+    });
   }
-}
 
-// Handle Wallet Connect
-async function handleConnectWallet() {
-  try {
-    showToast('Connecting to Stellar Testnet Wallet...', 'info');
-
-    const res = await connectFreighterWallet();
-
-    if (res.success && res.publicKey) {
-      state.isDemoMode = res.isFallback || false;
-      setConnectedState(res.publicKey);
-      elements.guideModal.classList.add('hidden');
-      showToast('Successfully connected to Stellar Testnet Wallet!', 'success');
-    }
-  } catch (err) {
-    console.error('Wallet connection error:', err);
-    state.isDemoMode = true;
-    setConnectedState(DEFAULT_TESTNET_ACCOUNT);
-    elements.guideModal.classList.add('hidden');
-    showToast('Connected to Stellar Testnet Wallet!', 'success');
+  if (elements.btnTestWalletErr) {
+    elements.btnTestWalletErr.addEventListener('click', () => {
+      elements.inputStudentId.value = 'STU-REJECT';
+      showToast('Simulating Error Type 2: Wallet Signature Rejection...', 'info');
+      elements.checkInForm.dispatchEvent(new Event('submit'));
+    });
   }
-}
 
-function handleCustomKeyConnect() {
-  const customKey = elements.inputCustomPublicKey.value.trim();
-  const targetKey = (customKey.length === 56) ? customKey : DEFAULT_TESTNET_ACCOUNT;
-
-  state.isDemoMode = true;
-  setConnectedState(targetKey);
-  elements.guideModal.classList.add('hidden');
-  showToast('Connected to Stellar Testnet Address!', 'success');
+  if (elements.btnTestRpcErr) {
+    elements.btnTestRpcErr.addEventListener('click', () => {
+      elements.inputStudentId.value = 'STU-RPC';
+      showToast('Simulating Error Type 3: Soroban RPC Simulation Failure...', 'info');
+      elements.checkInForm.dispatchEvent(new Event('submit'));
+    });
+  }
 }
 
 function setConnectedState(publicKey) {
   const targetKey = (publicKey && publicKey.trim().length === 56) ? publicKey.trim() : DEFAULT_TESTNET_ACCOUNT;
   state.wallet = targetKey;
   localStorage.setItem('stellar_attend_wallet', targetKey);
+  localStorage.setItem('stellar_attend_provider', state.walletProvider);
 
   elements.btnConnectWallet.classList.add('hidden');
   elements.walletPill.classList.remove('hidden');
@@ -259,8 +199,9 @@ function setConnectedState(publicKey) {
 
   const truncated = `${targetKey.slice(0, 4)}...${targetKey.slice(-4)}`;
   elements.walletAddressPill.textContent = truncated;
+  elements.walletProviderPill.textContent = state.walletProvider;
 
-  elements.walletStatusBadge.textContent = state.isDemoMode ? 'TESTNET CONNECTED' : 'FREIGHTER CONNECTED';
+  elements.walletStatusBadge.textContent = `${state.walletProvider.toUpperCase()} CONNECTED`;
   elements.walletStatusBadge.className = 'badge badge-success';
   elements.displayPublicKey.innerHTML = `<span class="code-font text-accent">${targetKey}</span>`;
 
@@ -272,9 +213,10 @@ function setConnectedState(publicKey) {
 
 function handleDisconnectWallet() {
   state.wallet = null;
-  state.isDemoMode = false;
+  state.walletProvider = 'Disconnected';
   state.balance = '0.00';
   localStorage.removeItem('stellar_attend_wallet');
+  localStorage.removeItem('stellar_attend_provider');
 
   if (state.balanceInterval) {
     clearInterval(state.balanceInterval);
@@ -304,22 +246,11 @@ async function fetchAndRenderBalance() {
 
   try {
     const bal = await getXlmBalance(state.wallet);
-
-    if (bal === 'UNFUNDED') {
-      state.balance = '0.00';
-      elements.displayBalance.textContent = '0.00';
-      elements.balanceStatusText.innerHTML = `<span class="text-warning"><i class="fa-solid fa-triangle-exclamation"></i> Unfunded Testnet Account</span>`;
-      showToast('Account is unfunded on Testnet. Click "Fund 10k XLM" to get test funds.', 'info');
-    } else {
-      state.balance = bal;
-      elements.displayBalance.textContent = bal;
-      elements.balanceStatusText.textContent = 'Live Stellar Testnet Horizon Balance';
-    }
+    state.balance = bal === 'UNFUNDED' ? '0.00' : bal;
+    elements.displayBalance.textContent = state.balance;
+    elements.balanceStatusText.textContent = 'Live Stellar Horizon Testnet Balance';
   } catch (err) {
-    console.error('Balance fetch error:', err);
-    state.balance = '424.00';
-    elements.displayBalance.textContent = '424.00';
-    elements.balanceStatusText.textContent = 'Live Stellar Testnet Horizon Balance';
+    handleStructuredError(err);
   } finally {
     elements.refreshIcon.classList.remove('fa-spin');
   }
@@ -327,44 +258,39 @@ async function fetchAndRenderBalance() {
 
 async function handleFriendbotFunding() {
   if (!state.wallet) return;
-
   elements.btnFriendbot.disabled = true;
   elements.btnFriendbot.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Funding...`;
 
   try {
     const res = await requestFriendbotFunding(state.wallet);
     if (res.success) {
-      showToast('Successfully received 10,000 Testnet XLM from Friendbot!', 'success');
+      showToast('Account funded with 10,000 Testnet XLM!', 'success');
       await fetchAndRenderBalance();
-    } else {
-      showToast(`Friendbot error: ${res.error}`, 'error');
     }
   } catch (err) {
-    showToast('Failed to fund account via Friendbot.', 'error');
+    handleStructuredError(err);
   } finally {
     elements.btnFriendbot.disabled = false;
-    elements.btnFriendbot.innerHTML = `<i class="fa-solid fa-faucet-drip"></i> Fund 10k XLM (Friendbot)`;
+    elements.btnFriendbot.innerHTML = `<i class="fa-solid fa-faucet-drip"></i> Fund 10k XLM`;
   }
 }
 
+// Contract Called From Frontend Handler
 async function handleAttendanceSubmit(e) {
   e.preventDefault();
 
   if (!state.wallet) {
-    showToast('Please connect your Wallet before submitting attendance.', 'error');
-    window.triggerConnect();
+    showToast('Please connect your Wallet before invoking contract.', 'error');
+    elements.guideModal.classList.remove('hidden');
     return;
   }
 
   const session = elements.selectSession.value;
   const studentId = elements.inputStudentId.value.trim();
   const studentName = elements.inputStudentName.value.trim();
-  const receiverAddress = elements.inputReceiverAddress.value.trim();
-  const amount = elements.inputAmount.value.trim();
-  const memo = elements.inputMemo.value.trim();
 
-  if (!studentId || !studentName || !receiverAddress || !amount || !memo) {
-    showToast('Please fill out all required check-in fields.', 'error');
+  if (!studentId || !studentName || !session) {
+    showToast('Please fill in all form fields.', 'error');
     return;
   }
 
@@ -372,16 +298,16 @@ async function handleAttendanceSubmit(e) {
   elements.txFeedbackCard.scrollIntoView({ behavior: 'smooth' });
   elements.txDetailsBox.classList.add('hidden');
   elements.btnSubmitAttendance.disabled = true;
-  elements.btnSubmitAttendance.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Processing Attendance Tx...`;
+  elements.btnSubmitAttendance.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Invoking Soroban Contract...`;
 
   resetStepper();
 
   try {
-    const result = await submitAttendanceTransaction({
+    const result = await invokeSorobanContract({
+      walletProvider: state.walletProvider,
       senderPublicKey: state.wallet,
-      receiverPublicKey: receiverAddress,
-      amountXlm: amount,
-      memoText: memo,
+      studentId,
+      sessionCode: session,
       onProgress: updateStepperProgress,
     });
 
@@ -394,7 +320,7 @@ async function handleAttendanceSubmit(e) {
       elements.txStatusBadge.textContent = 'CONFIRMED';
       elements.txStatusBadge.className = 'badge badge-success';
       elements.txSpinner.classList.add('hidden');
-      elements.txStatusText.textContent = 'Attendance successfully recorded on Stellar Testnet!';
+      elements.txStatusText.textContent = 'Soroban Smart Contract executed & event published!';
 
       elements.txDetailsBox.classList.remove('hidden');
       elements.txHashDisplay.textContent = result.hash;
@@ -406,9 +332,9 @@ async function handleAttendanceSubmit(e) {
         studentId,
         session,
         timestamp: new Date().toLocaleString(),
-        amount: `${amount} XLM`,
+        contractId: `${CONTRACT_ID.slice(0, 4)}...${CONTRACT_ID.slice(-4)}`,
+        status: 'ON-CHAIN EVENT',
         txHash: result.hash,
-        status: 'VERIFIED',
       };
 
       state.records.unshift(record);
@@ -419,91 +345,106 @@ async function handleAttendanceSubmit(e) {
       renderLedger();
       updateMetrics();
 
-      showToast('Attendance recorded & verified on Stellar Testnet!', 'success');
+      // Log event in real-time stream box
+      logEventToStream({
+        id: `EVT-${Date.now().toString().slice(-6)}`,
+        contractId: `${CONTRACT_ID.slice(0, 4)}...${CONTRACT_ID.slice(-4)}`,
+        topic: `attend:${session}`,
+        studentId,
+        timestamp: new Date().toLocaleTimeString(),
+      });
 
-      setTimeout(fetchAndRenderBalance, 2000);
+      showToast('Soroban mark_attendance() contract call verified!', 'success');
+      setTimeout(fetchAndRenderBalance, 1500);
     }
   } catch (err) {
-    console.error('Attendance Transaction:', err);
-    
-    const mockHash = Array.from({length: 64}, () => Math.floor(Math.random()*16).toString(16)).join('');
-    
-    setStepComplete('step1');
-    setStepComplete('step2');
-    setStepComplete('step3');
-    setStepComplete('step4');
-
-    elements.txStatusBadge.textContent = 'CONFIRMED';
-    elements.txStatusBadge.className = 'badge badge-success';
-    elements.txSpinner.classList.add('hidden');
-    elements.txStatusText.textContent = 'Attendance successfully recorded on Stellar Testnet!';
-
-    elements.txDetailsBox.classList.remove('hidden');
-    elements.txHashDisplay.textContent = mockHash;
-    elements.linkStellarExpert.href = `https://stellar.expert/explorer/testnet/tx/${mockHash}`;
-
-    const record = {
-      id: state.records.length + 1,
-      studentName,
-      studentId,
-      session,
-      timestamp: new Date().toLocaleString(),
-      amount: `${amount} XLM`,
-      txHash: mockHash,
-      status: 'VERIFIED',
-    };
-
-    state.records.unshift(record);
-    state.totalCheckIns += 1;
-    state.verifiedTxCount += 1;
-
-    saveLedger();
-    renderLedger();
-    updateMetrics();
-
-    showToast('Attendance recorded & verified on Stellar Testnet!', 'success');
-    setTimeout(fetchAndRenderBalance, 1000);
+    handleStructuredError(err);
   } finally {
     elements.btnSubmitAttendance.disabled = false;
-    elements.btnSubmitAttendance.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Record Attendance on Blockchain (Send Tx)`;
+    elements.btnSubmitAttendance.innerHTML = `<i class="fa-solid fa-cube"></i> Invoke mark_attendance() on Soroban Smart Contract`;
   }
+}
+
+/**
+ * 3 Explicit Error Types Handler & Visualizer
+ */
+function handleStructuredError(err) {
+  console.error('Structured Error Captured:', err);
+  elements.txSpinner.classList.add('hidden');
+
+  let typeBadge = '';
+  let toastMsg = '';
+
+  if (err.type === ErrorTypes.TYPE_1_CONTRACT_LOGIC) {
+    typeBadge = '[TYPE 1: CONTRACT REVERT ERROR]';
+    toastMsg = `Contract Error: ${err.message}`;
+    elements.txStatusBadge.textContent = 'CONTRACT REVERT';
+    elements.txStatusBadge.className = 'badge badge-danger';
+    elements.txStatusText.innerHTML = `
+      <div style="color: #F87171; text-align: left;">
+        <strong><i class="fa-solid fa-triangle-exclamation"></i> ${typeBadge}</strong><br>
+        <span style="font-size: 0.85rem;">Code: ${err.code}</span><br>
+        <span>${err.message}</span>
+      </div>`;
+  } else if (err.type === ErrorTypes.TYPE_2_WALLET_AUTH) {
+    typeBadge = '[TYPE 2: WALLET AUTH ERROR]';
+    toastMsg = `Wallet Error: ${err.message}`;
+    elements.txStatusBadge.textContent = 'WALLET CANCELLED';
+    elements.txStatusBadge.className = 'badge badge-warning';
+    elements.txStatusText.innerHTML = `
+      <div style="color: #FBBF24; text-align: left;">
+        <strong><i class="fa-solid fa-user-xmark"></i> ${typeBadge}</strong><br>
+        <span style="font-size: 0.85rem;">Code: ${err.code}</span><br>
+        <span>${err.message}</span>
+      </div>`;
+  } else {
+    typeBadge = '[TYPE 3: SOROBAN RPC NETWORK ERROR]';
+    toastMsg = `Network Error: ${err.message || 'Soroban RPC Simulation Failure'}`;
+    elements.txStatusBadge.textContent = 'RPC FAILURE';
+    elements.txStatusBadge.className = 'badge badge-danger';
+    elements.txStatusText.innerHTML = `
+      <div style="color: #F87171; text-align: left;">
+        <strong><i class="fa-solid fa-server"></i> ${typeBadge}</strong><br>
+        <span style="font-size: 0.85rem;">Code: ${err.code || 'SOROBAN_RPC_FAIL'}</span><br>
+        <span>${err.message || 'Simulation timeout on Soroban RPC.'}</span>
+      </div>`;
+  }
+
+  showToast(toastMsg, 'error');
 }
 
 function updateStepperProgress(stepId, message) {
   elements.txSpinner.classList.remove('hidden');
   elements.txStatusText.textContent = message;
 
-  if (stepId === 'step1') {
-    setStepActive('step1');
-  } else if (stepId === 'step2') {
-    setStepComplete('step1');
-    setStepActive('step2');
-  } else if (stepId === 'step3') {
-    setStepComplete('step1');
-    setStepComplete('step2');
-    setStepActive('step3');
-  } else if (stepId === 'step4') {
-    setStepComplete('step1');
-    setStepComplete('step2');
-    setStepComplete('step3');
-    setStepComplete('step4');
-  }
+  if (stepId === 'step1') setStepActive('step1');
+  else if (stepId === 'step2') { setStepComplete('step1'); setStepActive('step2'); }
+  else if (stepId === 'step3') { setStepComplete('step1'); setStepComplete('step2'); setStepActive('step3'); }
+  else if (stepId === 'step4') { setStepComplete('step1'); setStepComplete('step2'); setStepComplete('step3'); setStepComplete('step4'); }
 }
 
 function resetStepper() {
-  ['step1', 'step2', 'step3', 'step4'].forEach(id => {
-    elements[id].className = 'step-item';
-  });
+  ['step1', 'step2', 'step3', 'step4'].forEach(id => elements[id].className = 'step-item');
   elements.txStatusBadge.textContent = 'PROCESSING';
   elements.txStatusBadge.className = 'badge badge-info';
 }
 
-function setStepActive(stepId) {
-  elements[stepId].className = 'step-item active';
+function setStepActive(stepId) { elements[stepId].className = 'step-item active'; }
+function setStepComplete(stepId) { elements[stepId].className = 'step-item complete'; }
+
+function startEventStreamListener() {
+  state.unsubscribeEvents = subscribeSorobanEvents((evt) => {
+    logEventToStream(evt);
+  });
 }
 
-function setStepComplete(stepId) {
-  elements[stepId].className = 'step-item complete';
+function logEventToStream(evt) {
+  if (!elements.eventStreamBox) return;
+  const line = document.createElement('div');
+  line.style.marginBottom = '4px';
+  line.innerHTML = `<span style="color: #10B981;">[${evt.timestamp}]</span> <span style="color: #6366F1;">EVENT</span> <strong>${evt.topic}</strong> &rarr; Student: <span style="color: #00F0FF;">${evt.studentId}</span>`;
+  elements.eventStreamBox.appendChild(line);
+  elements.eventStreamBox.scrollTop = elements.eventStreamBox.scrollHeight;
 }
 
 function loadSavedLedger() {
@@ -512,12 +453,10 @@ function loadSavedLedger() {
     try {
       state.records = JSON.parse(saved);
       state.totalCheckIns = state.records.length;
-      state.verifiedTxCount = state.records.filter(r => r.status === 'VERIFIED').length;
+      state.verifiedTxCount = state.records.length;
       renderLedger();
       updateMetrics();
-    } catch (e) {
-      console.warn('Failed to parse saved ledger:', e);
-    }
+    } catch (e) {}
   }
 }
 
@@ -530,7 +469,7 @@ function renderLedger() {
     elements.tableBodyAttendance.innerHTML = `
       <tr class="empty-row">
         <td colspan="8" class="text-center text-muted">
-          No attendance transactions recorded yet. Submit your first check-in above!
+          No attendance transactions recorded yet. Invoke the smart contract above!
         </td>
       </tr>`;
     return;
@@ -543,10 +482,10 @@ function renderLedger() {
       <td><span class="code-font">${escapeHtml(rec.studentId)}</span></td>
       <td><span class="badge badge-info">${escapeHtml(rec.session)}</span></td>
       <td class="text-muted">${rec.timestamp}</td>
-      <td class="code-font text-warning">${rec.amount}</td>
-      <td><span class="badge badge-success"><i class="fa-solid fa-circle-check"></i> ON-CHAIN VERIFIED</span></td>
+      <td class="code-font text-accent">${rec.contractId || 'CC43...3F4G'}</td>
+      <td><span class="badge badge-success"><i class="fa-solid fa-circle-check"></i> SOROBAN EVENT</span></td>
       <td>
-        <a href="https://stellar.expert/explorer/testnet/tx/${rec.txHash}" target="_blank" rel="noopener noreferrer" class="code-font text-accent" title="View on Stellar Expert Explorer">
+        <a href="https://stellar.expert/explorer/testnet/tx/${rec.txHash}" target="_blank" rel="noopener noreferrer" class="code-font text-accent">
           ${rec.txHash.slice(0, 6)}...${rec.txHash.slice(-6)} <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 0.7rem;"></i>
         </a>
       </td>
@@ -565,14 +504,14 @@ function exportLedgerCSV() {
     return;
   }
 
-  const headers = ['ID', 'Student Name', 'Student ID', 'Session', 'Timestamp', 'Fee', 'Status', 'Tx Hash'];
+  const headers = ['ID', 'Student Name', 'Student ID', 'Session', 'Timestamp', 'Contract ID', 'Status', 'Tx Hash'];
   const rows = state.records.map(r => [
     r.id,
     `"${r.studentName}"`,
     `"${r.studentId}"`,
     `"${r.session}"`,
     `"${r.timestamp}"`,
-    `"${r.amount}"`,
+    `"${r.contractId}"`,
     `"${r.status}"`,
     `"${r.txHash}"`,
   ]);
@@ -581,7 +520,7 @@ function exportLedgerCSV() {
   const encodedUri = encodeURI(csvContent);
   const link = document.createElement('a');
   link.setAttribute('href', encodedUri);
-  link.setAttribute('download', `stellar_attendance_ledger_${Date.now()}.csv`);
+  link.setAttribute('download', `soroban_attendance_ledger_${Date.now()}.csv`);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -590,26 +529,15 @@ function exportLedgerCSV() {
 }
 
 function copyToClipboard(text, successMessage) {
-  navigator.clipboard.writeText(text).then(() => {
-    showToast(successMessage, 'success');
-  }).catch(() => {
-    showToast('Failed to copy to clipboard.', 'error');
-  });
+  navigator.clipboard.writeText(text).then(() => showToast(successMessage, 'success')).catch(() => showToast('Copy failed', 'error'));
 }
 
 function showToast(message, type = 'info') {
   const toast = document.createElement('div');
   toast.className = `toast toast-${type}`;
-
   const iconClass = type === 'success' ? 'fa-circle-check text-success' : type === 'error' ? 'fa-circle-xmark text-danger' : 'fa-circle-info text-accent';
-
-  toast.innerHTML = `
-    <i class="fa-solid ${iconClass}"></i>
-    <span>${escapeHtml(message)}</span>
-  `;
-
+  toast.innerHTML = `<i class="fa-solid ${iconClass}"></i><span>${escapeHtml(message)}</span>`;
   elements.toastContainer.appendChild(toast);
-
   setTimeout(() => {
     toast.style.opacity = '0';
     toast.style.transform = 'translateX(100%)';
