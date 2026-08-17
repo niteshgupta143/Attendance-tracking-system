@@ -5,9 +5,12 @@ import {
   invokeSorobanContract,
   subscribeSorobanEvents,
   CONTRACT_ID,
+  BADGE_CONTRACT_ID,
   DEFAULT_TESTNET_ACCOUNT,
   ErrorTypes,
 } from './stellar-service.js';
+
+import { globalEventStreamer } from './event-stream.js';
 
 // Application State
 const state = {
@@ -16,6 +19,10 @@ const state = {
   isDemoMode: false,
   balance: '0.00',
   records: [],
+  badges: [
+    { id: 309, session: 'CS401-2026', studentId: 'STU-9812', title: 'CS401 Verified Badge' },
+    { id: 412, session: 'W3101-2026', studentId: 'STU-9812', title: 'W3101 Soroban Badge' }
+  ],
   totalCheckIns: 0,
   verifiedTxCount: 0,
   balanceInterval: null,
@@ -433,7 +440,7 @@ function setStepActive(stepId) { elements[stepId].className = 'step-item active'
 function setStepComplete(stepId) { elements[stepId].className = 'step-item complete'; }
 
 function startEventStreamListener() {
-  state.unsubscribeEvents = subscribeSorobanEvents((evt) => {
+  globalEventStreamer.start((evt) => {
     logEventToStream(evt);
   });
 }
@@ -442,7 +449,7 @@ function logEventToStream(evt) {
   if (!elements.eventStreamBox) return;
   const line = document.createElement('div');
   line.style.marginBottom = '4px';
-  line.innerHTML = `<span style="color: #10B981;">[${evt.timestamp}]</span> <span style="color: #6366F1;">EVENT</span> <strong>${evt.topic}</strong> &rarr; Student: <span style="color: #00F0FF;">${evt.studentId}</span>`;
+  line.innerHTML = `<span style="color: #10B981;">[${evt.timestamp}]</span> <span style="color: #6366F1;">SOROBAN EVENT</span> <strong>${evt.topic}</strong> &rarr; Student: <span style="color: #00F0FF;">${evt.studentId}</span> | Badge #${evt.badgeId}`;
   elements.eventStreamBox.appendChild(line);
   elements.eventStreamBox.scrollTop = elements.eventStreamBox.scrollHeight;
 }

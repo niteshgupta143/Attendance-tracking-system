@@ -179,6 +179,9 @@
         <button class="tab-btn active" data-tab="tabCheckIn">
           <i class="fa-solid fa-cube"></i> Invoke Soroban Smart Contract
         </button>
+        <button class="tab-btn" data-tab="tabBadges">
+          <i class="fa-solid fa-award text-warning"></i> NFT Badges (Inter-Contract)
+        </button>
         <button class="tab-btn" data-tab="tabHistory">
           <i class="fa-solid fa-list-check"></i> Attendance Ledger
         </button>
@@ -345,6 +348,37 @@
                   </tr>
                 </tbody>
               </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB: INTER-CONTRACT ATTENDANCE NFT BADGES -->
+      <section class="tab-content" id="tabBadges">
+        <div class="card glass-card">
+          <div class="card-header">
+            <div class="card-title">
+              <i class="fa-solid fa-award text-warning"></i> Inter-Contract Soroban Attendance Badges
+            </div>
+            <span class="badge badge-accent">Minted via Secondary Soroban Contract: CB54...F5H</span>
+          </div>
+          <div class="card-body">
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+              When <code>AttendanceContract.mark_attendance()</code> executes on Soroban, it triggers a cross-contract call to <code>StudentBadgeContract.issue_badge()</code>, minting an immutable Attendance Proof NFT Badge.
+            </p>
+            <div class="badge-grid" id="badgeGalleryGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem;">
+              <div class="badge-card glass-card" style="background: rgba(245, 158, 11, 0.08); border-color: rgba(245, 158, 11, 0.3); padding: 1rem; border-radius: var(--radius-md); text-align: center;">
+                <div style="font-size: 2.5rem; color: #F59E0B; margin-bottom: 0.5rem;"><i class="fa-solid fa-shield-halved"></i></div>
+                <h4 style="font-size: 0.95rem; color: var(--text-primary); margin-bottom: 0.25rem;">CS401 Verified Badge</h4>
+                <p style="font-size: 0.75rem; color: var(--text-muted);">Badge ID: #309 | Student: STU-9812</p>
+                <span class="badge badge-success" style="margin-top: 0.5rem;">Cross-Contract Minted</span>
+              </div>
+              <div class="badge-card glass-card" style="background: rgba(99, 102, 241, 0.08); border-color: rgba(99, 102, 241, 0.3); padding: 1rem; border-radius: var(--radius-md); text-align: center;">
+                <div style="font-size: 2.5rem; color: #6366F1; margin-bottom: 0.5rem;"><i class="fa-solid fa-award"></i></div>
+                <h4 style="font-size: 0.95rem; color: var(--text-primary); margin-bottom: 0.25rem;">W3101 Soroban Badge</h4>
+                <p style="font-size: 0.75rem; color: var(--text-muted);">Badge ID: #412 | Student: STU-9812</p>
+                <span class="badge badge-accent" style="margin-top: 0.5rem;">Inter-Contract Call</span>
+              </div>
             </div>
           </div>
         </div>
