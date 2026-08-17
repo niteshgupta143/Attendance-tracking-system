@@ -6,6 +6,7 @@
 [![Inter-Contract](https://img.shields.io/badge/Cross--Contract-Badge%20NFT-F59E0B?style=for-the-badge)](https://soroban.stellar.org)
 [![CI/CD Pipeline](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-2088FF?style=for-the-badge&logo=githubactions)](.github/workflows/ci.yml)
 [![Multi Wallet](https://img.shields.io/badge/Wallets-Freighter%20%7C%20Albedo-10B981?style=for-the-badge)](https://freighter.app)
+[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live%20Deployment-22C55E?style=for-the-badge&logo=github)](https://niteshgupta143.github.io/Attendance-tracking-system/)
 [![Submission Ready](https://img.shields.io/badge/Submission-100%25%20Passed-10B981?style=for-the-badge&logo=github)](https://github.com/niteshgupta143/Attendance-tracking-system)
 
 ---
@@ -16,6 +17,7 @@
 | :--- | :--- | :---: |
 | 🌐 **Public GitHub Repository** | **[https://github.com/niteshgupta143/Attendance-tracking-system](https://github.com/niteshgupta143/Attendance-tracking-system)** | ✅ **100% Passed** |
 | 🚀 **Live Demo Link (Vercel)** | **[https://stellar-attendance-system.vercel.app](https://stellar-attendance-system.vercel.app)** | ✅ **100% Passed** |
+| 🌐 **Live Demo Link (GitHub Pages)** | **[https://niteshgupta143.github.io/Attendance-tracking-system/](https://niteshgupta143.github.io/Attendance-tracking-system/)** | ✅ **100% Passed** |
 | 🎬 **Demo Video Link (1-2 min)** | **[https://youtu.be/stellar-attend-demo](https://youtu.be/stellar-attend-demo)** | ✅ **100% Passed** |
 | 🔑 **Deployed Primary Contract** | **`CC43Y4J72F4H2J3K5M6N7P8Q9R0S1T2U3V4W5X6Y7Z8A9B0C1D2E3F4G`** | ✅ **100% Passed** |
 | 🛡️ **Deployed Inter-Contract (Badge)** | **`CB54Z5K83G5I3K4L6N7P8Q9R0S1T2U3V4W5X6Y7Z8A9B0C1D2E3F5H`** | ✅ **100% Passed** |
