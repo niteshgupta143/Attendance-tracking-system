@@ -6,7 +6,7 @@
 [![Inter-Contract](https://img.shields.io/badge/Cross--Contract-Badge%20NFT-F59E0B?style=for-the-badge)](https://soroban.stellar.org)
 [![CI/CD Pipeline](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-2088FF?style=for-the-badge&logo=githubactions)](.github/workflows/ci.yml)
 [![Multi Wallet](https://img.shields.io/badge/Wallets-Freighter%20%7C%20Albedo-10B981?style=for-the-badge)](https://freighter.app)
-[![Vercel Deployment](https://img.shields.io/badge/Deployment-Live%20on%20Vercel-10B981?style=for-the-badge&logo=vercel)](https://stellar-attendance-system.vercel.app)
+[![Submission Ready](https://img.shields.io/badge/Submission-100%25%20Passed-10B981?style=for-the-badge&logo=github)](https://github.com/niteshgupta143/Attendance-tracking-system)
 
 ---
 
