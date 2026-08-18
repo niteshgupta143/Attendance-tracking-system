@@ -76,7 +76,10 @@ The platform is integrated with `analytics.js`, a production-grade monitoring mo
 ### 3. CI/CD Pipeline Running (GitHub Actions)
 ![CI/CD Pipeline Running](docs/cicd_pipeline_running.jpg)
 
-### 4. Test Output with 9 Passing Unit Tests
+### 4. Production Analytics & Monitoring Setup Dashboard
+![Analytics & Monitoring Setup](docs/analytics_monitoring_setup.jpg)
+
+### 5. Test Output with 9 Passing Unit Tests
 ![Test Output Passing](docs/test_output_passing.jpg)
 
 ---
