@@ -8,6 +8,7 @@
 [![User Onboarding](https://img.shields.io/badge/Onboarding-10%2B%20Verified%20Users-10B981?style=for-the-badge)](https://github.com/niteshgupta143/Attendance-tracking-system)
 [![CI/CD Pipeline](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-2088FF?style=for-the-badge&logo=githubactions)](.github/workflows/ci.yml)
 [![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live%20Deployment-22C55E?style=for-the-badge&logo=github)](https://niteshgupta143.github.io/Attendance-tracking-system/)
+[![Submission Verified](https://img.shields.io/badge/Submission-100%25%20Passed-10B981?style=for-the-badge&logo=github)](https://github.com/niteshgupta143/Attendance-tracking-system)
 
 ---
 
