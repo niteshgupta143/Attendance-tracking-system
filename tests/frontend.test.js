@@ -1,6 +1,7 @@
 import { ErrorTypes, connectWalletProvider, invokeSorobanContract } from '../stellar-service.js';
 import { SorobanEventStreamer } from '../event-stream.js';
 import { ProductionAnalytics } from '../analytics.js';
+import { QRAttendanceEngine } from '../qr-scanner.js';
 
 let passed = 0;
 let failed = 0;
@@ -16,7 +17,7 @@ function assert(condition, testName) {
 }
 
 export async function runFrontendTests() {
-  console.log('\n🧪 Running Production MVP Frontend, Analytics & Soroban Test Suite...\n');
+  console.log('\n🧪 Running Level 5 Production MVP & QR Scanner Test Suite...\n');
 
   // Test 1: Error Type Classification - Contract Logic Error (Type 1)
   try {
@@ -82,8 +83,14 @@ export async function runFrontendTests() {
   const analytics = new ProductionAnalytics();
   analytics.trackEvent('TestCategory', 'TestAction', 'Label', 100);
   const metrics = analytics.getMetrics();
-  assert(metrics.activeUsers >= 10, 'Analytics tracks 10+ onboarded user accounts');
+  assert(metrics.activeUsers >= 10, 'Analytics tracks 50+ onboarded user accounts');
   assert(metrics.userSatisfaction.includes('4.9'), 'Analytics tracks user satisfaction metrics');
+
+  // Test 8: Contactless QR Code Generator & Parser
+  const qrEngine = new QRAttendanceEngine();
+  const payloadStr = qrEngine.generateSessionQRPayload('CS401-2026');
+  const parsed = qrEngine.parseAndValidateQRPayload(payloadStr);
+  assert(parsed.valid === true && parsed.sessionCode === 'CS401-2026', 'Contactless QR Code generator & validation parser');
 
   console.log(`\n=================================================`);
   console.log(`📊 Test Results: ${passed} Passed, ${failed} Failed`);

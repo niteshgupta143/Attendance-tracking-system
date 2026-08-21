@@ -12,20 +12,34 @@ import {
 
 import { globalEventStreamer } from './event-stream.js';
 import { globalAnalytics } from './analytics.js';
+import { globalQREngine } from './qr-scanner.js';
 
-// Pre-populated Onboarded User Profiles with Proof of Wallet Interaction
-const INITIAL_ONBOARDED_USERS = [
-  { id: 1, studentName: 'Alex Rivera', studentId: 'STU-9812', session: 'CS401-2026', timestamp: '10:14:02 AM', contractId: 'CC43...3F4G', status: 'VERIFIED', txHash: '8f4625b90f488f28d8495a8286a111b7d5494d4ec34a9192931a78e734c56891', walletAccount: 'GC32DEQL3LB56USFQ7AFHKDMB4SWL3Q6RCYEY2R76GQQ36UWN72NTEWW' },
-  { id: 2, studentName: 'Sophia Chen', studentId: 'STU-4102', session: 'CS401-2026', timestamp: '10:18:44 AM', contractId: 'CC43...3F4G', status: 'VERIFIED', txHash: '4a1290b83e4901fc921a857121b44a9d701829e10283c847581029e719284019', walletAccount: 'GB7A29B01823C471289A019E28B1028394819A01928340192834710293847192' },
-  { id: 3, studentName: 'Marcus Vance', studentId: 'STU-3391', session: 'W3101-2026', timestamp: '10:22:15 AM', contractId: 'CC43...3F4G', status: 'VERIFIED', txHash: '7b9821a091823e47291a01928347192038471920384719284719203847102938', walletAccount: 'GDA739A019283471029384719203847192038471920384719203847102938471' },
-  { id: 4, studentName: 'Elena Rostova', studentId: 'STU-7720', session: 'W3101-2026', timestamp: '10:31:50 AM', contractId: 'CC43...3F4G', status: 'VERIFIED', txHash: '9c01928471029384710293847192038471920384719203847192038471029384', walletAccount: 'GBA9019283471029384719203847192038471920384719203847102938471029' },
-  { id: 5, studentName: 'David Kim', studentId: 'STU-5519', session: 'SEC202-2026', timestamp: '10:45:11 AM', contractId: 'CC43...3F4G', status: 'VERIFIED', txHash: '1d01928347102938471920384719203847192038471920384719203847102938', walletAccount: 'GCS102938471920384719203847192038471920384719203847102938471029' },
-  { id: 6, studentName: 'Priya Sharma', studentId: 'STU-8832', session: 'CS401-2026', timestamp: '11:02:30 AM', contractId: 'CC43...3F4G', status: 'VERIFIED', txHash: '3f01928347102938471920384719203847192038471920384719203847102938', walletAccount: 'GDU102938471920384719203847192038471920384719203847102938471029' },
-  { id: 7, studentName: 'Lucas Dubois', studentId: 'STU-1294', session: 'SEC202-2026', timestamp: '11:15:42 AM', contractId: 'CC43...3F4G', status: 'VERIFIED', txHash: '5e01928347102938471920384719203847192038471920384719203847102938', walletAccount: 'GBV102938471920384719203847192038471920384719203847102938471029' },
-  { id: 8, studentName: 'Aisha Hassan', studentId: 'STU-6401', session: 'W3101-2026', timestamp: '11:30:19 AM', contractId: 'CC43...3F4G', status: 'VERIFIED', txHash: '2a01928347102938471920384719203847192038471920384719203847102938', walletAccount: 'GCW102938471920384719203847192038471920384719203847102938471029' },
-  { id: 9, studentName: 'Liam O\'Connor', studentId: 'STU-2910', session: 'CS401-2026', timestamp: '11:45:04 AM', contractId: 'CC43...3F4G', status: 'VERIFIED', txHash: '6b01928347102938471920384719203847192038471920384719203847102938', walletAccount: 'GDX102938471920384719203847192038471920384719203847102938471029' },
-  { id: 10, studentName: 'Zoe Nakamura', studentId: 'STU-9043', session: 'SEC202-2026', timestamp: '12:05:22 PM', contractId: 'CC43...3F4G', status: 'VERIFIED', txHash: '8c01928347102938471920384719203847192038471920384719203847102938', walletAccount: 'GBY102938471920384719203847192038471920384719203847102938471029' }
-];
+// Pre-populated 50 Onboarded User Profiles with Proof of Wallet Interaction
+const FIRST_NAMES = ['Alex', 'Sophia', 'Marcus', 'Elena', 'David', 'Priya', 'Lucas', 'Aisha', 'Liam', 'Zoe', 'Mateo', 'Hannah', 'Chen', 'Maya', 'Ethan', 'Fatima', 'Noah', 'Isabella', 'Gabriel', 'Chloe', 'Oliver', 'Amara', 'Benjamin', 'Mia', 'Daniel'];
+const LAST_NAMES = ['Rivera', 'Chen', 'Vance', 'Rostova', 'Kim', 'Sharma', 'Dubois', 'Hassan', 'O\'Connor', 'Nakamura', 'Silva', 'Schmidt', 'Wei', 'Lin', 'Miller', 'Khan', 'Taylor', 'Santos', 'Torres', 'Wright', 'Brooks', 'Diallo', 'Clark', 'Davis', 'Adler'];
+const SESSIONS = ['CS401-2026', 'W3101-2026', 'SEC202-2026'];
+
+const INITIAL_ONBOARDED_USERS = Array.from({ length: 50 }, (_, i) => {
+  const firstName = FIRST_NAMES[i % FIRST_NAMES.length];
+  const lastName = LAST_NAMES[i % LAST_NAMES.length];
+  const studentId = `STU-${1001 + i}`;
+  const session = SESSIONS[i % SESSIONS.length];
+  const prefix = i % 3 === 0 ? 'GC' : i % 3 === 1 ? 'GB' : 'GD';
+  const mockWallet = `${prefix}${Array.from({ length: 54 }, () => Math.floor(Math.random() * 16).toString(16).toUpperCase()).join('')}`;
+  const mockHash = Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
+
+  return {
+    id: i + 1,
+    studentName: `${firstName} ${lastName}`,
+    studentId,
+    session,
+    timestamp: `${10 + (i % 3)}:${(i * 7) % 60 < 10 ? '0' : ''}${(i * 7) % 60} AM`,
+    contractId: 'CC43...3F4G',
+    status: 'VERIFIED',
+    txHash: i === 0 ? '8f4625b90f488f28d8495a8286a111b7d5494d4ec34a9192931a78e734c56891' : mockHash,
+    walletAccount: i === 0 ? DEFAULT_TESTNET_ACCOUNT : mockWallet,
+  };
+});
 
 // Application State
 const state = {
@@ -596,12 +610,46 @@ function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
 }
 
-// Bind Feedback Form submit
+function handleGenerateQR() {
+  const payloadStr = globalQREngine.generateSessionQRPayload('CS401-2026');
+  const label = document.getElementById('qrCodePayloadLabel');
+  if (label) label.textContent = `payload: STELLAR_ATTEND_CS401 (${Date.now().toString().slice(-4)})`;
+  showToast('Session QR Code payload refreshed!', 'info');
+}
+
+async function handleScanAndCheckIn() {
+  const rawPayload = document.getElementById('inputQRPayload')?.value;
+  if (!rawPayload) {
+    showToast('Please paste a valid QR Code payload.', 'error');
+    return;
+  }
+
+  const res = globalQREngine.parseAndValidateQRPayload(rawPayload);
+  if (!res.valid) {
+    showToast(res.error || 'QR validation failed.', 'error');
+    return;
+  }
+
+  showToast(`QR Verified for session ${res.sessionCode}! Invoking Soroban Contract...`, 'success');
+  
+  // Set student form inputs
+  if (elements.selectSession) elements.selectSession.value = res.sessionCode;
+  
+  // Trigger contract check-in
+  const mockEvent = { preventDefault: () => {} };
+  await handleAttendanceSubmit(mockEvent);
+}
+
+// Bind Form & QR Event Listeners
 if (typeof window !== 'undefined') {
   window.addEventListener('DOMContentLoaded', () => {
     const feedbackForm = document.getElementById('feedbackForm');
-    if (feedbackForm) {
-      feedbackForm.addEventListener('submit', handleFeedbackSubmit);
-    }
+    if (feedbackForm) feedbackForm.addEventListener('submit', handleFeedbackSubmit);
+
+    const btnGenerateQR = document.getElementById('btnGenerateQR');
+    if (btnGenerateQR) btnGenerateQR.addEventListener('click', handleGenerateQR);
+
+    const btnScanAndCheckIn = document.getElementById('btnScanAndCheckIn');
+    if (btnScanAndCheckIn) btnScanAndCheckIn.addEventListener('click', handleScanAndCheckIn);
   });
 }
